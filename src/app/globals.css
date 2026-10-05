@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+/* Design tokens — docs/DESIGN_SYSTEM.md. Components use these utilities, never raw hex. */
+@theme {
+  --color-background: #070d1a;
+  --color-surface: #0d1726;
+  --color-raised: #111c2d;
+  --color-border: #24324a;
+  --color-primary: #4f7cff;
+  --color-primary-hover: #6990ff;
+  --color-purple: #8b5cf6;
+  --color-cyan: #35d8c2;
+  --color-success: #35d08f;
+  --color-warning: #f5bd4f;
+  --color-error: #f05d70;
+  --color-foreground: #eef4ff;
+  --color-muted: #8d9bb3;
+
+  --radius-card: 12px;
+  --radius-control: 8px;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-border);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
