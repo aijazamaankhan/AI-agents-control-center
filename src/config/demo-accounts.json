@@ -1,0 +1,76 @@
+{
+  "$comment": "LOCAL DEVELOPMENT ONLY. Seeded by scripts/seed-demo.mjs (refuses to run in production). Documented in docs/LOGINS.md.",
+  "platformAdmin": {
+    "label": "Velorex Studio platform admin",
+    "name": "Velorex Admin",
+    "email": "admin@velorex.test",
+    "password": "Velorex-admin-2026"
+  },
+  "companies": [
+    {
+      "key": "acme",
+      "name": "Acme Corporation (Demo)",
+      "industry": "Software & Technology",
+      "size": "51-200",
+      "country": "IN",
+      "timezone": "Asia/Kolkata",
+      "full": true,
+      "users": [
+        {
+          "role": "OWNER",
+          "name": "Demo Owner",
+          "email": "demo@agentos.dev",
+          "password": "AgentOS-demo-2026",
+          "platformAdmin": true
+        },
+        {
+          "role": "ADMIN",
+          "name": "Asha Admin",
+          "email": "admin@acme.test",
+          "password": "Acme-admin-2026"
+        },
+        {
+          "role": "MANAGER",
+          "name": "Mohan Manager",
+          "email": "manager@acme.test",
+          "password": "Acme-manager-2026"
+        },
+        {
+          "role": "MEMBER",
+          "name": "Meera Member",
+          "email": "member@acme.test",
+          "password": "Acme-member-2026"
+        },
+        {
+          "role": "VIEWER",
+          "name": "Vikram Viewer",
+          "email": "viewer@acme.test",
+          "password": "Acme-viewer-2026"
+        }
+      ]
+    },
+    {
+      "key": "globex",
+      "name": "Globex Industries (Demo)",
+      "industry": "Manufacturing",
+      "size": "201-500",
+      "country": "US",
+      "timezone": "America/New_York",
+      "full": false,
+      "users": [
+        {
+          "role": "OWNER",
+          "name": "Grace Owner",
+          "email": "owner@globex.test",
+          "password": "Globex-owner-2026"
+        },
+        {
+          "role": "MEMBER",
+          "name": "Gary Member",
+          "email": "member@globex.test",
+          "password": "Globex-member-2026"
+        }
+      ]
+    }
+  ]
+}

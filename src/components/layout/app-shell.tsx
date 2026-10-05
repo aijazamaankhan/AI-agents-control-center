@@ -32,6 +32,9 @@ export function AppShell({ user, organizationName, roleLabel, children }: AppShe
         <div className="flex-1 overflow-y-auto px-3 pb-4">
           <SidebarNav />
         </div>
+        <p className="px-5 pb-3 font-mono text-[10px] text-muted/70" title="Running version">
+          {process.env.NEXT_PUBLIC_APP_VERSION}
+        </p>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">

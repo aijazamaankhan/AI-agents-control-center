@@ -1,34 +1,44 @@
 #!/usr/bin/env node
-// Creates a ready-to-use OWNER account (full access) with a demo company for local development:
-//   npm run seed:demo                         → demo@agentos.dev / AgentOS-demo-2026
+// Local demo logins for every role (development only — refuses to run when NODE_ENV=production).
+//   npm run seed:demo                       → make sure every account in src/config/demo-accounts.json
+//                                             exists (idempotent; existing passwords are left alone)
+//   npm run seed:demo -- --reset-passwords  → also reset those accounts to the documented passwords
 //   npm run seed:demo -- --email you@company.com --password "your-password" --name "Your Name"
-//   npm run seed:demo -- --if-empty           → only when the database has no users (used by `npm run dev`)
-// Refuses to run when NODE_ENV=production. Never use these credentials anywhere real.
+//                                           → your own OWNER account with its own demo company
+// `npm run dev` runs it with --quiet on every start (set AGENTOS_SKIP_DEMO_SEED=1 to opt out).
+// All logins are listed in docs/LOGINS.md. Never use these credentials anywhere real.
 import "dotenv/config";
 import { createHash, randomBytes, scrypt } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import pg from "pg";
+
+const ACCOUNTS = JSON.parse(
+  readFileSync(new URL("../src/config/demo-accounts.json", import.meta.url), "utf8"),
+);
 
 const args = process.argv.slice(2);
 const arg = (name) => {
   const i = args.indexOf(`--${name}`);
   return i >= 0 ? args[i + 1] : undefined;
 };
-export const DEMO_EMAIL = (arg("email") ?? "demo@agentos.dev").trim().toLowerCase();
-export const DEMO_PASSWORD = arg("password") ?? "AgentOS-demo-2026";
-const OWNER_NAME = arg("name") ?? (arg("email") ? DEMO_EMAIL.split("@")[0] : "Demo Owner");
+const RESET = args.includes("--reset-passwords");
+const QUIET = args.includes("--quiet");
+const CUSTOM_EMAIL = arg("email")?.trim().toLowerCase();
+const CUSTOM_PASSWORD = arg("password");
 
-if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(DEMO_EMAIL)) {
-  console.error("✖ --email must be a valid email address.");
-  process.exit(1);
-}
-if (DEMO_PASSWORD.length < 10 || DEMO_PASSWORD.length > 128) {
-  console.error("✖ --password must be 10–128 characters.");
-  process.exit(1);
+if (CUSTOM_EMAIL !== undefined) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(CUSTOM_EMAIL)) {
+    console.error("✖ --email must be a valid email address.");
+    process.exit(1);
+  }
+  if (!CUSTOM_PASSWORD || CUSTOM_PASSWORD.length < 10 || CUSTOM_PASSWORD.length > 128) {
+    console.error("✖ --password must be 10–128 characters.");
+    process.exit(1);
+  }
 }
 
 if (process.env.NODE_ENV === "production") {
-  console.error("✖ Refusing to create a demo account in production.");
+  console.error("✖ Refusing to create demo accounts in production.");
   process.exit(1);
 }
 if (!process.env.DATABASE_URL) {
@@ -104,56 +114,93 @@ const CAPABILITIES = [
   ["make_payments", "Make payments", "DENIED"],
 ];
 
-const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
-await client.connect();
-try {
-  if (process.argv.includes("--if-empty")) {
-    const { rows } = await client.query("SELECT count(*)::int AS n FROM users");
-    if (rows[0].n > 0) process.exit(0);
-  }
-  const existing = await client.query("SELECT id FROM users WHERE email = $1", [DEMO_EMAIL]);
-  if (existing.rowCount) {
-    console.log(
-      `✔ An account for ${DEMO_EMAIL} already exists — sign in with it (password unchanged).`,
-    );
-    process.exit(0);
-  }
+const SMALL_DEPARTMENTS = ["Production", "Quality", "Supply Chain"];
+const SMALL_AGENTS = [
+  ["Demand Forecaster", "Supply Chain", "Anthropic", "Claude Haiku", "Forecasts weekly demand."],
+  ["QA Inspector", "Quality", "Google", "Gemini Flash", "Flags defects in inspection reports."],
+];
 
-  await client.query("BEGIN");
+const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+let firstKey = null;
+
+/** Creates the user if missing. Returns its id and whether anything was created. */
+async function ensureUser({ email, name, password, platformAdmin = false }) {
+  const existing = await client.query("SELECT id FROM users WHERE email = $1", [email]);
+  if (existing.rowCount) {
+    const userId = existing.rows[0].id;
+    if (RESET) {
+      await client.query(
+        "UPDATE users SET password_hash = $2, suspended_at = NULL, updated_at = now() WHERE id = $1",
+        [userId, await hashPassword(password)],
+      );
+    }
+    if (platformAdmin) {
+      await client.query("UPDATE users SET is_platform_admin = true WHERE id = $1", [userId]);
+    }
+    return { userId, created: false };
+  }
   const userId = id("usr");
+  await client.query(
+    "INSERT INTO users (id, email, name, password_hash, is_platform_admin, updated_at) VALUES ($1, $2, $3, $4, $5, now())",
+    [userId, email, name, await hashPassword(password), platformAdmin],
+  );
+  return { userId, created: true };
+}
+
+async function ensureMembership(orgId, userId, role) {
+  await client.query(
+    `INSERT INTO memberships (id, organization_id, user_id, role, updated_at)
+     VALUES ($1, $2, $3, $4::"Role", now())
+     ON CONFLICT (organization_id, user_id) DO NOTHING`,
+    [id("mem"), orgId, userId, role],
+  );
+}
+
+/** Creates a company owned by `ownerId` with departments, agents, capabilities and API keys. */
+async function createCompany(company, ownerId) {
   const orgId = id("org");
   await client.query(
-    // Local owner accounts also get Velorex platform-admin access (dev only — never in production).
-    "INSERT INTO users (id, email, name, password_hash, is_platform_admin, updated_at) VALUES ($1, $2, $3, $4, true, now())",
-    [userId, DEMO_EMAIL, OWNER_NAME, await hashPassword(DEMO_PASSWORD)],
-  );
-  await client.query(
     `INSERT INTO organizations (id, name, slug, industry, company_size, country, timezone, updated_at)
-     VALUES ($1, 'Acme Corporation (Demo)', $2, 'Software & Technology', '51-200', 'IN', 'Asia/Kolkata', now())`,
-    [orgId, `acme-demo-${randomBytes(3).toString("hex")}`],
+     VALUES ($1, $2, $3, $4, $5, $6, $7, now())`,
+    [
+      orgId,
+      company.name,
+      `${company.key}-demo-${randomBytes(3).toString("hex")}`,
+      company.industry,
+      company.size,
+      company.country,
+      company.timezone,
+    ],
   );
-  await client.query(
-    `INSERT INTO memberships (id, organization_id, user_id, role, updated_at) VALUES ($1, $2, $3, 'OWNER', now())`,
-    [id("mem"), orgId, userId],
-  );
+  await ensureMembership(orgId, ownerId, "OWNER");
 
+  const departments = company.full ? DEPARTMENTS : SMALL_DEPARTMENTS;
+  const agents = company.full ? AGENTS : SMALL_AGENTS;
   const depIds = {};
-  for (const name of DEPARTMENTS) {
+  for (const name of departments) {
     depIds[name] = id("dep");
     await client.query(
       "INSERT INTO departments (id, organization_id, name, name_key, updated_at) VALUES ($1, $2, $3, $4, now())",
       [depIds[name], orgId, name, name.toLowerCase()],
     );
   }
-
-  let firstKey = null;
-  for (const [name, dep, provider, model, description] of AGENTS) {
+  for (const [name, dep, provider, model, description] of agents) {
     const agentId = id("agt");
     await client.query(
       `INSERT INTO agents (id, organization_id, department_id, name, name_key, description, provider, model,
                            connection_type, created_by_id, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'SDK', $9, now())`,
-      [agentId, orgId, depIds[dep], name, name.toLowerCase(), description, provider, model, userId],
+      [
+        agentId,
+        orgId,
+        depIds[dep],
+        name,
+        name.toLowerCase(),
+        description,
+        provider,
+        model,
+        ownerId,
+      ],
     );
     for (const [key, label, rule] of CAPABILITIES) {
       await client.query(
@@ -173,15 +220,41 @@ try {
         createHash("sha256").update(apiKey).digest("hex"),
       ],
     );
-    firstKey ??= apiKey;
+    if (company.full) firstKey ??= apiKey;
   }
   await client.query(
     `INSERT INTO audit_logs (id, organization_id, actor_user_id, action, resource_type, resource_id, metadata)
      VALUES ($1, $2, $3, 'organization.created', 'organization', $2, '{"source":"seed:demo"}')`,
-    [id("aud"), orgId, userId],
+    [id("aud"), orgId, ownerId],
   );
-  await client.query("COMMIT");
+  return orgId;
+}
 
+/** The company's org: the first one its seeded owner owns, created if missing. */
+async function ensureCompany(company) {
+  const [owner, ...others] = company.users;
+  const { userId: ownerId, created } = await ensureUser(owner);
+  const owned = await client.query(
+    `SELECT organization_id FROM memberships WHERE user_id = $1 AND role = 'OWNER'
+     ORDER BY created_at ASC LIMIT 1`,
+    [ownerId],
+  );
+  let orgId = owned.rows[0]?.organization_id;
+  let changed = created;
+  if (!orgId) {
+    orgId = await createCompany(company, ownerId);
+    changed = true;
+  }
+  for (const user of others) {
+    const res = await ensureUser(user);
+    await ensureMembership(orgId, res.userId, user.role);
+    changed ||= res.created;
+  }
+  return changed;
+}
+
+function saveDemoKey() {
+  if (!firstKey) return;
   // Let `npm run demo:agent` work without arguments (Lead Research Agent's key).
   try {
     let env = readFileSync(".env", "utf8");
@@ -190,17 +263,67 @@ try {
       : `${env.trimEnd()}\n# Demo agent key (Lead Research Agent) — used by \`npm run demo:agent\`\nAGENTOS_API_KEY=${firstKey}\n`;
     writeFileSync(".env", env);
   } catch {
-    /* no .env — key is printed below */
+    /* no .env — the key can be regenerated from the agent's page */
   }
+}
 
-  console.log("\n✔ Owner account created (full access + Velorex admin panel at /admin)");
-  console.log(`   Email:    ${DEMO_EMAIL}`);
-  console.log(`   Password: ${DEMO_PASSWORD}`);
-  console.log("   Company:  Acme Corporation (Demo) — 8 departments, 6 agents");
-  console.log("   Live data: run `npm run demo:agent` in a second terminal.\n");
+function printLogins() {
+  const rows = [
+    ["Velorex admin panel", "http://localhost:3000/admin/login", ACCOUNTS.platformAdmin],
+    ...ACCOUNTS.companies.flatMap((c) =>
+      c.users.map((u) => [`${c.name} · ${u.role}`, "http://localhost:3000/login", u]),
+    ),
+  ];
+  console.log("\n  Demo logins (local development only — full list in docs/LOGINS.md)");
+  for (const [who, url, u] of rows) {
+    console.log(`   ${who.padEnd(38)} ${u.email.padEnd(22)} ${u.password.padEnd(20)} ${url}`);
+  }
+  console.log("");
+}
+
+await client.connect();
+try {
+  await client.query("BEGIN");
+  // Serialise concurrent seeds (two dev servers, parallel tests) so they can't race on inserts.
+  await client.query("SELECT pg_advisory_xact_lock(hashtext('agentos:seed-demo'))");
+  let changed = false;
+  if (CUSTOM_EMAIL !== undefined) {
+    const owner = {
+      email: CUSTOM_EMAIL,
+      name: arg("name") ?? CUSTOM_EMAIL.split("@")[0],
+      password: CUSTOM_PASSWORD,
+      platformAdmin: true, // local owner accounts also get the Velorex admin panel (dev only)
+      role: "OWNER",
+    };
+    const company = { ...ACCOUNTS.companies[0], users: [owner] };
+    changed = await ensureCompany(company);
+    await client.query("COMMIT");
+    saveDemoKey();
+    console.log(
+      changed
+        ? `\n✔ Owner account ready: ${CUSTOM_EMAIL} (company "${company.name}", plus /admin access)\n`
+        : `✔ ${CUSTOM_EMAIL} already exists — sign in with it${RESET ? " (password reset)" : " (password unchanged)"}.`,
+    );
+  } else {
+    changed = (await ensureUser({ ...ACCOUNTS.platformAdmin, platformAdmin: true })).created;
+    for (const company of ACCOUNTS.companies) {
+      changed = (await ensureCompany(company)) || changed;
+    }
+    await client.query("COMMIT");
+    saveDemoKey();
+    if (changed || RESET || !QUIET) {
+      if (changed) console.log("\n✔ Demo accounts created");
+      if (RESET) console.log("\n✔ Demo account passwords reset to the documented values");
+      printLogins();
+    } else {
+      console.log(
+        "✔ Demo logins ready — see docs/LOGINS.md (admin: /admin/login, company: /login)",
+      );
+    }
+  }
 } catch (err) {
   await client.query("ROLLBACK").catch(() => {});
-  console.error(`✖ Could not create the demo account: ${err.message}`);
+  console.error(`✖ Could not create the demo accounts: ${err.message}`);
   process.exitCode = 1;
 } finally {
   await client.end();

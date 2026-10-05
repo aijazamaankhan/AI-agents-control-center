@@ -1,4 +1,6 @@
+import { execSync } from "node:child_process";
 import type { NextConfig } from "next";
+import pkg from "./package.json" with { type: "json" };
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -29,8 +31,21 @@ const securityHeaders = [
     : []),
 ];
 
+/** Shown in the app so you can check which code you're running (compare with `git log -1`). */
+function appVersion(): string {
+  try {
+    const sha = execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] })
+      .toString()
+      .trim();
+    return `v${pkg.version} · ${sha}`;
+  } catch {
+    return `v${pkg.version}`;
+  }
+}
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  env: { NEXT_PUBLIC_APP_VERSION: appVersion() },
   reactStrictMode: true,
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

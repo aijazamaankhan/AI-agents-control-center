@@ -24,6 +24,8 @@ Routing guards:
 - Unauthenticated user on an app route → `/login?next=…`.
 - Authenticated user without an organization → `/onboarding`.
 - Authenticated user on `/login` or `/signup` → `/dashboard`.
+- Unauthenticated user on `/admin/*` → `/admin/login` (Velorex staff sign-in); a platform admin
+  there → `/admin`; a non-admin account is refused on the form. Admin sign-out → `/admin/login`.
 
 ## App shell
 

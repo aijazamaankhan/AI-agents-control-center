@@ -119,7 +119,10 @@ convenience but is never the enforcement point.
 ## 6d. Platform administration (Velorex Studio)
 
 - `User.isPlatformAdmin` can only be set from the server CLI (`npm run admin:grant`); there
-  is no UI to grant it. `/admin/*` returns 404 to everyone else (`requirePlatformAdmin`), and
+  is no UI to grant it. Signed-out visitors to `/admin/*` go to the separate `/admin/login`,
+  which only issues a session to platform admins (a non-admin's freshly created session is
+  deleted at once, the attempt is audited as `admin.login_denied`, and the error doesn't say
+  whether the password was right). Signed-in non-admins get 404 (`requirePlatformAdmin`), and
   every admin service function re-asserts the flag (defence in depth). All admin actions are
   audited as `admin.*` with the acting admin.
 - Admins **cannot read secrets**: passwords are one-way scrypt hashes and agent credentials
@@ -161,3 +164,11 @@ secrets or passwords.
 Do not store passwords, API keys, secrets, full customer records, private
 prompts or tool arguments unless the organization explicitly enables capture.
 Retention settings and export/deletion endpoints arrive with Phase 9.
+
+## 6e. Local demo accounts
+
+`npm run dev` seeds the demo logins in `src/config/demo-accounts.json` (documented in
+`docs/LOGINS.md`). The passwords are public by design, so: the seed script refuses to run with
+`NODE_ENV=production`, the sign-in pages only list demo logins when `NODE_ENV !== "production"`
+and the accounts exist, and production deployments (Docker, `next start`) never run the seed.
+Never point a development checkout at a production database.

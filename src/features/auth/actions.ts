@@ -5,6 +5,7 @@ import { AppError } from "@/lib/api/errors";
 import { clearSessionCookie, readSessionCookie, setSessionCookie } from "@/lib/auth/cookies";
 import { getRequestMeta } from "@/lib/auth/request-meta";
 import { deleteSessionByToken } from "@/lib/auth/sessions";
+import { db } from "@/lib/db/client";
 import { logger } from "@/lib/logger";
 import { recordAudit } from "@/lib/security/audit";
 import {
@@ -55,7 +56,46 @@ export async function loginAction(_prev: ActionState, formData: FormData): Promi
   redirect(destination);
 }
 
-export async function logoutAction(): Promise<void> {
+const ADMIN_DENIED = "Invalid email or password, or this account has no Velorex admin access.";
+
+/** Sign-in for the Velorex Studio admin panel: only platform admins get a session. */
+export async function adminLoginAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const raw = formDataToObject(formData);
+  const parsed = loginSchema.safeParse(raw);
+  if (!parsed.success)
+    return { ok: false, fieldErrors: fieldErrorsFrom(parsed.error), values: echoValues(raw) };
+
+  try {
+    const meta = await getRequestMeta();
+    const result = await logIn(parsed.data, meta);
+    const user = await db.user.findUnique({
+      where: { id: result.userId },
+      select: { isPlatformAdmin: true },
+    });
+    if (!user?.isPlatformAdmin) {
+      await deleteSessionByToken(result.token);
+      await recordAudit({
+        action: "admin.login_denied",
+        actorUserId: result.userId,
+        resourceType: "user",
+        resourceId: result.userId,
+        meta,
+      });
+      return { ok: false, message: ADMIN_DENIED, values: echoValues(raw) };
+    }
+    await setSessionCookie(result.token, result.expiresAt);
+  } catch (err) {
+    if (err instanceof AppError && err.code === "UNAUTHENTICATED")
+      return { ok: false, message: ADMIN_DENIED, values: echoValues(raw) };
+    return failure(err, raw);
+  }
+  redirect("/admin");
+}
+
+async function endSession(): Promise<void> {
   const token = await readSessionCookie();
   if (token) {
     const userId = await deleteSessionByToken(token);
@@ -70,5 +110,14 @@ export async function logoutAction(): Promise<void> {
     }
   }
   await clearSessionCookie();
+}
+
+export async function logoutAction(): Promise<void> {
+  await endSession();
   redirect("/login");
+}
+
+export async function adminLogoutAction(): Promise<void> {
+  await endSession();
+  redirect("/admin/login");
 }

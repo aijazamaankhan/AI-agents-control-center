@@ -141,6 +141,20 @@ Update this file at the end of every phase.
 - Admin access is granted only via `npm run admin:grant -- --email …` (the local seeded
   owner is an admin automatically).
 
+### Separate logins & demo accounts for every role
+
+- **Two sign-in pages**: company login at `/login`, **Velorex admin login at `/admin/login`**
+  (Velorex-branded; rejects non-admin accounts; signing out of the admin panel returns there).
+  Visiting `/admin` signed out goes to the admin login. Links between both pages and in the
+  landing-page footer.
+- **Demo logins for every role** (`src/config/demo-accounts.json`, listed in
+  [LOGINS.md](LOGINS.md)): platform admin, Acme Owner/Admin/Manager/Member/Viewer and a second
+  company (Globex) to show tenant isolation. `npm run dev` creates any missing ones on every
+  start (idempotent; `--reset-passwords` restores the documented passwords). Development only.
+- Sign-in pages list the demo logins in development — click to fill.
+- **`npm run update`** pulls the latest code safely; the running version (`v0.1.0 · <commit>`)
+  is shown under the sign-in box and in the sidebar.
+
 ## 🔜 Next
 
 | Phase | Scope                 | Key deliverables                                                                                                                                                               |

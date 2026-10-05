@@ -69,3 +69,37 @@ test("theme mode, settings controls and the Velorex admin panel", async ({ page 
   await page.goto("/admin/audit?action=admin.");
   await expect(page.getByText("admin.platform_admin_granted").first()).toBeVisible();
 });
+
+test("separate admin and company logins with the seeded demo accounts", async ({ page }) => {
+  execFileSync("node", ["scripts/seed-demo.mjs", "--quiet", "--reset-passwords"], {
+    env: { ...process.env, NODE_ENV: "development", DATABASE_URL: process.env.TEST_DATABASE_URL },
+  });
+
+  // Not signed in → the admin panel sends you to its own login.
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/\/admin\/login$/);
+  await expect(page.getByRole("heading", { name: "Velorex Studio admin" })).toBeVisible();
+
+  // A company account can't get into the admin panel.
+  await page.getByLabel("Email").fill("viewer@acme.test");
+  await page.getByLabel("Password").fill("Acme-viewer-2026");
+  await page.getByRole("button", { name: "Sign in to admin panel" }).click();
+  await expect(page.getByText("no Velorex admin access")).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\/login$/);
+
+  // The platform admin can.
+  await page.getByLabel("Email").fill("admin@velorex.test");
+  await page.getByLabel("Password").fill("Velorex-admin-2026");
+  await page.getByRole("button", { name: "Sign in to admin panel" }).click();
+  await expect(page.getByRole("heading", { name: "Platform overview" })).toBeVisible();
+  await page.context().clearCookies();
+
+  // Company login: a viewer lands on their company's dashboard.
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("viewer@acme.test");
+  await page.getByLabel("Password").fill("Acme-viewer-2026");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await page.goto("/departments");
+  await expect(page.getByRole("main").getByText("Customer Support").first()).toBeVisible();
+});

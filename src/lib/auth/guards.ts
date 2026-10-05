@@ -49,7 +49,7 @@ export async function requireOrgContext(): Promise<OrgContext> {
 /** Velorex Studio staff only. Everyone else gets a plain 404 — the admin area isn't advertised. */
 export async function requirePlatformAdmin(): Promise<ResolvedSession> {
   const session = await getCurrentSession();
-  if (!session) redirect("/login?next=/admin");
+  if (!session) redirect("/admin/login");
   if (!session.user.isPlatformAdmin) notFound();
   return session;
 }

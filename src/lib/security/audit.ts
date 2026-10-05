@@ -34,7 +34,8 @@ export type AuditAction =
   | "admin.agent_keys_revoked"
   | "admin.inquiry_handled"
   | "admin.platform_admin_granted"
-  | "admin.platform_admin_revoked";
+  | "admin.platform_admin_revoked"
+  | "admin.login_denied";
 
 export interface AuditEntry {
   action: AuditAction;

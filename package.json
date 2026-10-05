@@ -2,7 +2,7 @@
   "name": "agentos",
   "version": "0.1.0",
   "private": true,
-  "description": "AgentOS \u2014 Your AI workforce. One control center.",
+  "description": "AgentOS — Your AI workforce. One control center.",
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -29,7 +29,8 @@
     "db:local:stop": "prisma dev stop agentos",
     "demo:agent": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/demo-agent.mjs",
     "seed:demo": "node scripts/seed-demo.mjs",
-    "admin:grant": "node scripts/admin-grant.mjs"
+    "admin:grant": "node scripts/admin-grant.mjs",
+    "update": "node scripts/update.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

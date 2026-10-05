@@ -106,7 +106,9 @@ system theme. The choice is remembered on this device.
 
 ### 9. Velorex Studio admin panel (platform owners only)
 
-Open the account menu → **Velorex admin panel**, or go to `/admin`.
+Sign in at **http://localhost:3000/admin/login** (separate from the company login at `/login`),
+or open the account menu → **Velorex admin panel**. Local demo admin: `admin@velorex.test` /
+`Velorex-admin-2026` — every demo login is listed in [LOGINS.md](LOGINS.md).
 
 - **Overview** — customers, users, agents, tasks and events across the platform.
 - **Customers** — every company: members, departments, agents and their API keys.
@@ -125,7 +127,7 @@ Give someone admin access (run on the server, after they sign up):
 npm run admin:grant -- --email person@velorex.dev        # add  --revoke  to remove
 ```
 
-The local demo owner (`demo@agentos.dev`) is already an admin.
+The local demo owner (`demo@agentos.dev`) and `admin@velorex.test` are already admins.
 
 ### 10. Settings & roles
 
@@ -148,21 +150,47 @@ The local demo owner (`demo@agentos.dev`) is already an admin.
 
 ```powershell
 cd Z:\agentos-platform
-git pull
-npm install
+npm run update      # get the latest code safely (first time: see "Updating" below)
 npm run dev
 ```
 
-Open **http://localhost:3000**. On a fresh database a **demo owner account** is created
-for you — sign in with **demo@agentos.dev / AgentOS-demo-2026** (the sign-in page shows a
-"Use demo account" button in development). Or click **Start Free** to create your own.
-Want your own owner login? `npm run seed:demo -- --email you@company.com --password "at-least-10-chars"`.
-After `git pull`, keep `npm run dev` running or restart it — database updates are applied
+Open **http://localhost:3000**. `npm run dev` creates **demo logins for every role** — company
+users sign in at **/login**, Velorex admins at **/admin/login**. All emails and passwords are in
+**[LOGINS.md](LOGINS.md)** (e.g. owner **demo@agentos.dev / AgentOS-demo-2026**); in development
+the sign-in pages also list them — click one to fill the form. Or click **Start Free** to create
+your own company. Database updates are applied
 automatically. `npm run dev` does everything:
 creates `.env` with generated secrets, starts a **built-in local database** (PostgreSQL
 running inside Node — nothing to install; the first start downloads it once), applies
 migrations and starts the app. Stop with `Ctrl+C`; your data is kept. To stop the
 background database too: `npm run db:local:stop`.
+
+### Updating to the latest code
+
+The version you're running (e.g. `v0.1.0 · e965893`) is shown under the sign-in box and at the
+bottom of the app sidebar. To update:
+
+```powershell
+cd Z:\agentos-platform
+npm run update        # stashes local edits, fetches + merges the latest code, npm install
+npm run dev           # restart — new migrations and demo logins are applied automatically
+```
+
+**First time only** — if your copy is too old to have `npm run update`, or `git pull` keeps
+failing, reset your copy to the latest code. ⚠ This **discards local changes to tracked files**
+(your `.env` and database are kept):
+
+```powershell
+cd Z:\agentos-platform
+git fetch origin claude/cool-thompson-hypiuv
+git checkout claude/cool-thompson-hypiuv
+git reset --hard origin/claude/cool-thompson-hypiuv
+npm install
+npm run dev
+```
+
+Then compare the short code under the sign-in box with `git log -1 --oneline` — they match when
+you're up to date. Stop any running `npm run dev` (Ctrl+C) before updating.
 
 ### See it live: the demo agent
 

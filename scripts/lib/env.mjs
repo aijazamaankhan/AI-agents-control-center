@@ -194,12 +194,19 @@ export async function prepare() {
     }
   }
   migrate(databaseUrl);
-  // First run on an empty database: create the local demo account (dev only, never production).
-  execSync("node scripts/seed-demo.mjs --if-empty", {
-    stdio: "inherit",
-    shell: true,
-    env: { ...process.env, DATABASE_URL: databaseUrl },
-  });
+  // Make sure the local demo logins (docs/LOGINS.md) exist — dev only, never production.
+  // Idempotent: existing accounts and passwords are left alone. Opt out with AGENTOS_SKIP_DEMO_SEED=1.
+  if (process.env.AGENTOS_SKIP_DEMO_SEED !== "1" && env.AGENTOS_SKIP_DEMO_SEED !== "1") {
+    try {
+      execSync("node scripts/seed-demo.mjs --quiet", {
+        stdio: "inherit",
+        shell: true,
+        env: { ...process.env, DATABASE_URL: databaseUrl },
+      });
+    } catch {
+      console.warn("⚠ Could not prepare the demo logins — the app will still start.");
+    }
+  }
   return { ...process.env, ...readEnv(), DATABASE_URL: databaseUrl };
 }
 

@@ -21,7 +21,8 @@ const COLUMNS = [
     title: "Get started",
     links: [
       { label: "Start free", href: "/signup" },
-      { label: "Sign in", href: "/login" },
+      { label: "Company sign in", href: "/login" },
+      { label: "Velorex admin sign in", href: "/admin/login" },
       { label: "Developers & SDK", href: "#developers" },
       { label: "How it works", href: "#how-it-works" },
     ],

@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { STUDIO } from "@/config/site";
-import { logoutAction } from "@/features/auth/actions";
+import { adminLogoutAction } from "@/features/auth/actions";
 import { AdminNav } from "@/features/admin/components/admin-nav";
 import { requirePlatformAdmin } from "@/lib/auth/guards";
 
@@ -50,7 +50,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             ← AgentOS
           </Link>
           <ThemeToggle />
-          <form action={logoutAction}>
+          <form action={adminLogoutAction}>
             <button
               type="submit"
               className="inline-flex h-9 items-center gap-2 rounded-control px-3 text-sm text-muted hover:bg-raised hover:text-foreground"

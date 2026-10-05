@@ -17,6 +17,9 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
       <div className="w-full max-w-md rounded-card border border-border bg-surface p-6 sm:p-8">
         {children}
       </div>
+      <p className="mt-4 font-mono text-[10px] text-muted/70">
+        {process.env.NEXT_PUBLIC_APP_VERSION}
+      </p>
     </div>
   );
 }

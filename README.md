@@ -45,6 +45,7 @@ set `PLAYWRIGHT_CHROMIUM_EXECUTABLE=/path/to/chromium`.
 ## Documentation
 
 Start here: **[User & developer guide](docs/USER_GUIDE.md)** (incl. Windows setup) ·
+**[Demo logins](docs/LOGINS.md)** (company `/login` · Velorex admin `/admin/login`) ·
 **[Progress & roadmap](docs/PROGRESS.md)**.
 
 The `docs/` folder is the source of truth: [PRD](docs/PRD.md) ·
