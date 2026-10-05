@@ -42,9 +42,10 @@ test("theme mode, settings controls and the Velorex admin panel", async ({ page 
   await page.getByRole("button", { name: "Save profile" }).click();
   await expect(page.getByText("Profile saved.")).toBeVisible();
 
-  // Not an admin yet → the admin area doesn't exist for this user.
+  // Not an admin yet → sent to the admin login, which explains this account has no access.
   await page.goto("/admin");
-  await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\/login$/);
+  await expect(page.getByText("which has no admin access")).toBeVisible();
 
   // Grant admin the only supported way: the CLI.
   execFileSync("node", ["scripts/admin-grant.mjs", "--email", email], {

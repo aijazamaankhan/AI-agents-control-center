@@ -57,6 +57,9 @@ export async function loginAction(_prev: ActionState, formData: FormData): Promi
 }
 
 const ADMIN_DENIED = "Invalid email or password, or this account has no Velorex admin access.";
+/** Development only: say exactly why, since local demo passwords are public anyway. */
+const ADMIN_DENIED_DEV =
+  "This account signed in fine but isn't a Velorex platform admin (company admins like admin@acme.test use /login). Locally, use admin@velorex.test — see docs/LOGINS.md.";
 
 /** Sign-in for the Velorex Studio admin panel: only platform admins get a session. */
 export async function adminLoginAction(
@@ -84,7 +87,8 @@ export async function adminLoginAction(
         resourceId: result.userId,
         meta,
       });
-      return { ok: false, message: ADMIN_DENIED, values: echoValues(raw) };
+      const message = process.env.NODE_ENV === "production" ? ADMIN_DENIED : ADMIN_DENIED_DEV;
+      return { ok: false, message, values: echoValues(raw) };
     }
     await setSessionCookie(result.token, result.expiresAt);
   } catch (err) {

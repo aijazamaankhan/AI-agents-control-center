@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { sessionCookieName } from "./session-token";
 import {
   resolveOrgContext,
@@ -49,7 +49,8 @@ export async function requireOrgContext(): Promise<OrgContext> {
 /** Velorex Studio staff only. Everyone else gets a plain 404 — the admin area isn't advertised. */
 export async function requirePlatformAdmin(): Promise<ResolvedSession> {
   const session = await getCurrentSession();
-  if (!session) redirect("/admin/login");
-  if (!session.user.isPlatformAdmin) notFound();
+  // Signed out, or signed in with an account that has no admin access: the admin login page
+  // explains which account to use (it's public, so this reveals nothing).
+  if (!session?.user.isPlatformAdmin) redirect("/admin/login");
   return session;
 }

@@ -122,8 +122,9 @@ convenience but is never the enforcement point.
 - `User.isPlatformAdmin` can only be set from the server CLI (`npm run admin:grant`); there
   is no UI to grant it. Signed-out visitors to `/admin/*` go to the separate `/admin/login`,
   which only issues a session to platform admins (a non-admin's freshly created session is
-  deleted at once, the attempt is audited as `admin.login_denied`, and the error doesn't say
-  whether the password was right). Signed-in non-admins get 404 (`requirePlatformAdmin`), and
+  deleted at once, the attempt is audited as `admin.login_denied`, and in production the error
+  doesn't say whether the password was right; development names the demo admin account).
+  Signed-in non-admins are also sent to `/admin/login` (`requirePlatformAdmin`), and
   every admin service function re-asserts the flag (defence in depth). All admin actions are
   audited as `admin.*` with the acting admin.
 - Admins **cannot read secrets**: passwords are one-way scrypt hashes and agent credentials

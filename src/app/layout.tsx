@@ -39,7 +39,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-dvh">{children}</body>
+      {/* Extensions (Grammarly, password managers…) add attributes to <body>; don't let that
+          turn into a hydration error that re-renders the whole document. */}
+      <body className="min-h-dvh" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }

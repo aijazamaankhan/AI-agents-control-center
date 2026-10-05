@@ -60,9 +60,16 @@ Set `AGENTOS_SKIP_DEMO_SEED=1` in `.env` if you don't want `npm run dev` to crea
 
 ## "I can't log in"
 
-1. **Make sure you're running the latest code** — the version (e.g. `v0.1.0 · e965893`) is shown
-   under the sign-in box. Run `npm run update`, then `npm run dev` (see USER_GUIDE.md → Updating).
-2. **Wrong password?** Run `npm run seed:demo -- --reset-passwords`.
-3. **"Too many sign-in attempts"** — wait 15 minutes or restart `npm run dev`.
-4. **Admin page says "no Velorex admin access"** — you used a company account; use
+1. **Admin panel?** Use **`admin@velorex.test`** (or `demo@agentos.dev`) at `/admin/login`.
+   `admin@acme.test` is a _company_ admin — it signs in at `/login`, not the admin panel.
+2. **Make sure you're running the latest code** — the version (e.g. `v0.1.0 · e965893`) is shown
+   under the sign-in box. Stop the app (Ctrl+C), run `npm run update`, then `npm run dev`
+   (see USER_GUIDE.md → Updating). `npm run dev` clears the Next.js cache (`.next`) whenever
+   the code version changes; if pages still look old, delete the `.next` folder yourself.
+3. **Console says "Encountered a script tag…"** — that is a development warning shown after
+   something else failed or a browser extension changed the page; it is not the cause. Read the
+   error shown on the page / in the terminal, or try a private window (no extensions).
+4. **Wrong password?** Run `npm run seed:demo -- --reset-passwords`.
+5. **"Too many sign-in attempts"** — wait 15 minutes or restart `npm run dev`.
+6. **Admin page says "no Velorex admin access"** — you used a company account; use
    `admin@velorex.test` or `demo@agentos.dev`.

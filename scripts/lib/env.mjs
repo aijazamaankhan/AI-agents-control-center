@@ -8,6 +8,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  rmSync,
   statSync,
   writeFileSync,
 } from "node:fs";
@@ -169,9 +170,35 @@ export function migrate(databaseUrl) {
   });
 }
 
+const HEAD_STAMP = ".next/.agentos-head";
+
+/**
+ * After `git pull` (new commit) Next.js' dev cache can keep serving moved/renamed routes and
+ * layouts from the old code. Clear it whenever the checked-out commit changes.
+ */
+export function clearStaleBuildCache() {
+  let head;
+  try {
+    head = execSync("git rev-parse HEAD", { stdio: ["ignore", "pipe", "ignore"] })
+      .toString()
+      .trim();
+  } catch {
+    return; // not a git checkout
+  }
+  const previous = existsSync(HEAD_STAMP) ? readFileSync(HEAD_STAMP, "utf8").trim() : "";
+  if (previous === head) return;
+  if (existsSync(".next")) {
+    console.log("▶ New code version — clearing the Next.js build cache (.next)…");
+    rmSync(".next", { recursive: true, force: true });
+  }
+  mkdirSync(".next", { recursive: true });
+  writeFileSync(HEAD_STAMP, head);
+}
+
 /** Prepares .env + database. Returns the env to start the app with. */
 export async function prepare() {
   ensureDependencies();
+  clearStaleBuildCache();
   ensureEnvFile();
   generateClient();
   const env = readEnv();
