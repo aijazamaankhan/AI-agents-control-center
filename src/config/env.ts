@@ -8,7 +8,7 @@ const optionalSecret = z
 const serverEnvSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   NEXT_PUBLIC_APP_URL: z.url().default("http://localhost:3000"),
-  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+  DATABASE_URL: z.string().min(1),
   AUTH_SECRET: optionalSecret.pipe(z.string().min(32).optional()),
   ENCRYPTION_KEY: optionalSecret,
   REDIS_URL: optionalSecret,
@@ -24,7 +24,10 @@ export function getServerEnv(): ServerEnv {
   const parsed = serverEnvSchema.safeParse(process.env);
   if (!parsed.success) {
     const keys = parsed.error.issues.map((i) => i.path.join(".")).join(", ");
-    throw new Error(`Invalid environment configuration: ${keys}`);
+    const hint = keys.includes("DATABASE_URL")
+      ? " — start the app with `npm run dev` (it sets up a local database automatically) or set DATABASE_URL in .env"
+      : "";
+    throw new Error(`Invalid environment configuration: ${keys}${hint}`);
   }
   cached = parsed.data;
   return cached;

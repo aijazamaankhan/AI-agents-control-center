@@ -170,6 +170,7 @@ model Agent {
   credential   AgentCredential?
   apiKeys      AgentApiKey[]
   capabilities AgentCapability[]
+  tasks        Task[]
 
   @@unique([organizationId, nameKey])
   @@index([organizationId, departmentId])
@@ -229,6 +230,115 @@ model AgentCapability {
   @@unique([agentId, key])
   @@index([organizationId])
   @@map("agent_capabilities")
+}
+
+enum TaskStatus {
+  QUEUED
+  RUNNING
+  WAITING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ExecutionEventType {
+  TASK_STARTED
+  TASK_COMPLETED
+  TASK_FAILED
+  TASK_CANCELLED
+  LLM_CALL
+  TOOL_CALL
+  APPROVAL_REQUESTED
+  LOG
+}
+
+/// A unit of work an agent performs. Token counters are maintained incrementally
+/// from ingested events (traceable to execution_events.task_id).
+model Task {
+  id             String     @id
+  organizationId String     @map("organization_id")
+  agentId        String     @map("agent_id")
+  /// Department at the time the task ran (history stays put if the agent moves).
+  departmentId   String     @map("department_id")
+  name           String
+  description    String     @default("")
+  status         TaskStatus @default(RUNNING)
+  startedAt      DateTime   @map("started_at") @db.Timestamptz(3)
+  completedAt    DateTime?  @map("completed_at") @db.Timestamptz(3)
+  durationMs     Int?       @map("duration_ms")
+  inputTokens    BigInt     @default(0) @map("input_tokens")
+  outputTokens   BigInt     @default(0) @map("output_tokens")
+  cachedTokens   BigInt     @default(0) @map("cached_tokens")
+  llmCalls       Int        @default(0) @map("llm_calls")
+  toolCalls      Int        @default(0) @map("tool_calls")
+  /// Small result summary the agent chose to send (size-limited; see docs/SECURITY.md).
+  result         Json?
+  error          String?
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  agent      Agent            @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  executions Execution[]
+  events     ExecutionEvent[]
+
+  @@index([organizationId, startedAt(sort: Desc)])
+  @@index([organizationId, agentId, startedAt(sort: Desc)])
+  @@index([organizationId, status])
+  @@map("tasks")
+}
+
+/// One run (attempt) of a task.
+model Execution {
+  id             String     @id
+  organizationId String     @map("organization_id")
+  agentId        String     @map("agent_id")
+  taskId         String     @map("task_id")
+  status         TaskStatus @default(RUNNING)
+  startedAt      DateTime   @map("started_at") @db.Timestamptz(3)
+  completedAt    DateTime?  @map("completed_at") @db.Timestamptz(3)
+
+  task   Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  events ExecutionEvent[]
+
+  @@index([organizationId, taskId])
+  @@map("executions")
+}
+
+/// Immutable record of something an agent reported. Unique per (organization, idempotency key):
+/// a retried event never creates a second row, so tokens/activity are never double-counted.
+model ExecutionEvent {
+  id             String             @id
+  organizationId String             @map("organization_id")
+  agentId        String             @map("agent_id")
+  departmentId   String             @map("department_id")
+  taskId         String?            @map("task_id")
+  executionId    String?            @map("execution_id")
+  type           ExecutionEventType
+  idempotencyKey String             @map("idempotency_key")
+  /// SHA-256 of the canonical payload — reusing a key with a different payload is rejected.
+  payloadHash    String             @map("payload_hash")
+  occurredAt     DateTime           @map("occurred_at") @db.Timestamptz(3)
+  receivedAt     DateTime           @default(now()) @map("received_at") @db.Timestamptz(3)
+  provider       String?
+  model          String?
+  inputTokens    Int                @default(0) @map("input_tokens")
+  outputTokens   Int                @default(0) @map("output_tokens")
+  cachedTokens   Int                @default(0) @map("cached_tokens")
+  latencyMs      Int?               @map("latency_ms")
+  toolName       String?            @map("tool_name")
+  success        Boolean?
+  /// Short human-readable line for activity feeds (never prompts/arguments).
+  summary        String             @default("")
+  metadata       Json               @default("{}")
+
+  task      Task?      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  execution Execution? @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId, receivedAt(sort: Desc)])
+  @@index([organizationId, agentId, occurredAt(sort: Desc)])
+  @@index([taskId, occurredAt])
+  @@map("execution_events")
 }
 
 enum InquiryType {

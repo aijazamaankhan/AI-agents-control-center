@@ -6,22 +6,27 @@ AgentOS is a multi-tenant control plane and observability platform for a company
 agents: connect existing agents, organize them by department, trace every task, and
 account for every token and dollar.
 
-**Status:** Phase 1 (foundation) + UI v2 (live workforce map, "Signal" theme) + Phase 2 (departments) + Phase 2 (departments). See
+**Status:** Phase 1 (foundation) + UI v2 (live workforce map, "Signal" theme) + Phases 2–4 (departments, agents, event ingestion + live dashboard) + Phases 2–4 (departments, agents, event ingestion + live dashboard). See
 [`docs/PROGRESS.md`](docs/PROGRESS.md). See [`docs/PRD.md`](docs/PRD.md) for the phase plan.
 
-## Quick start
+## Quick start (Windows, macOS, Linux)
 
-**One command (Docker Desktop):** `docker compose up --build` → http://localhost:3000
-
-**Or with Node + PostgreSQL:**
-
-Requirements: Node ≥ 22, PostgreSQL 16.
+Only **Node.js 22+** is required — no database install:
 
 ```bash
-npm install                   # also generates the Prisma client
-npm run setup                 # .env with generated secrets + migrations
-npm run dev                   # http://localhost:3000
+npm install
+npm run dev        # creates .env, starts a built-in database, migrates, opens http://localhost:3000
 ```
+
+Then **Start Free**, connect an agent, and in a second terminal run the demo agent with
+its key to watch the dashboard come alive:
+
+```bash
+npm run demo:agent -- --key aos_live_…
+```
+
+Prefer Docker? `docker compose up --build`. Have your own PostgreSQL? Set `DATABASE_URL`
+in `.env`.
 
 ## Scripts
 

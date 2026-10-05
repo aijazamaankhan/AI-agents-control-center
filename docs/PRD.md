@@ -108,6 +108,15 @@ master specification and summarized per phase in `UX_FLOWS.md`, `API.md`,
 - [x] Department ↔ agent integration; department delete blocked while agents exist.
 - [x] Unit, integration (encryption at rest, isolation, RBAC) and E2E tests.
 
+## 6d. Phase 4 acceptance
+
+- [x] SDK + Event API + heartbeat; organization/agent derived from the API key.
+- [x] Idempotency: duplicates return the original ids; never double-count tokens/activity.
+- [x] Task / execution / immutable execution-event records; status transitions validated.
+- [x] Offline after heartbeat expiry (never deleted or failed).
+- [x] Live activity via SSE on the dashboard; agent Tasks/Activity tabs.
+- [x] Unit, integration (route handlers + Postgres) and E2E tests.
+
 ## 7. Assumptions (documented per "do not guess" rule)
 
 - **A1** _Book Demo_ links to a `mailto:` placeholder until a sales flow exists.
@@ -124,5 +133,9 @@ master specification and summarized per phase in `UX_FLOWS.md`, `API.md`,
   velorexdesign@gmail.com); change `STUDIO` in `src/config/site.ts` if different.
 - **A8** New agents are `OFFLINE` until they send a heartbeat/event (Phase 4); a passing
   "Test connection" records _verified_ but does not fake an online status.
+- **A9** Until the pricing table exists (Phase 6), cost shows `$0.00` with "Pricing
+  arrives in Phase 6" — tokens are real, cost is never estimated ad hoc.
+- **A10** Tokens/tasks "today" are computed from task counters (one row per task), not by
+  scanning raw events; full daily aggregates (`UsageDaily`) arrive in Phase 6.
 - **A5** Onboarding steps 2–5 (departments, connect agent, invite team) land with
   the phases that own those features; the checklist reflects real state.

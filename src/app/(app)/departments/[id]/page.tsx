@@ -17,6 +17,9 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { StatusIndicator } from "@/components/ui/status-indicator";
 import { AgentAvatar } from "@/features/agents/components/agent-avatar";
 import { listAgents } from "@/features/agents/server/agent-service";
+import { todayStats } from "@/features/events/server/activity";
+import { getOrganization } from "@/features/organizations/server/organization-service";
+import { formatTokens } from "@/features/workforce/format";
 import { KpiCard } from "@/features/dashboard/components/kpi-card";
 import { DeleteDepartment } from "@/features/departments/components/delete-department";
 import { EditDepartmentForm } from "@/features/departments/components/department-form";
@@ -45,9 +48,12 @@ export default async function DepartmentPage({ params }: { params: Promise<{ id:
     day: "numeric",
   });
 
-  const agents = await listAgents(ctx, { departmentId: dep.id });
+  const org = await getOrganization(ctx);
+  const [agents, stats] = await Promise.all([
+    listAgents(ctx, { departmentId: dep.id }),
+    todayStats(ctx, org.timezone, { departmentId: dep.id }),
+  ]);
   const working = agents.filter((a) => a.status === "WORKING").length;
-  const noEvents = "Available once agents report events";
   const metrics = [
     {
       label: "Agents",
@@ -65,25 +71,31 @@ export default async function DepartmentPage({ params }: { params: Promise<{ id:
     },
     {
       label: "Tasks today",
-      value: "0",
+      value: String(stats.tasks),
       icon: ListChecks,
       accent: "var(--color-cyan)",
-      caption: noEvents,
+      caption: `${stats.completed} completed · ${stats.failed} failed`,
     },
     {
       label: "Success rate",
-      value: "—",
+      value: stats.successRate === null ? "—" : `${Math.round(stats.successRate * 100)}%`,
       icon: Percent,
       accent: "var(--color-primary)",
-      caption: noEvents,
+      caption: "Today",
     },
-    { label: "Tokens", value: "0", icon: Coins, accent: "var(--color-purple)", caption: noEvents },
+    {
+      label: "Tokens",
+      value: formatTokens(stats.tokens),
+      icon: Coins,
+      accent: "var(--color-purple)",
+      caption: "Today",
+    },
     {
       label: "AI cost",
       value: "$0.00",
       icon: CircleDollarSign,
       accent: "var(--color-lime)",
-      caption: noEvents,
+      caption: "Pricing arrives in Phase 6",
     },
   ];
   const canConnect = can(ctx.role, "agents:manage");

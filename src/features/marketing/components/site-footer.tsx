@@ -88,7 +88,7 @@ export function SiteFooter() {
       <div className="border-t border-border">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 py-5 text-xs text-muted sm:flex-row">
           <p>© {new Date().getFullYear()} AgentOS. All rights reserved.</p>
-          <p className="flex flex-wrap items-center justify-center gap-1">
+          <div className="flex flex-wrap items-center justify-center gap-1">
             <span>Designed & developed by {STUDIO.developer} ·</span>
             <ServiceInquiryTrigger className="group inline-flex items-center gap-1 font-medium text-primary hover:underline">
               {STUDIO.name} — {STUDIO.descriptor}
@@ -97,7 +97,7 @@ export function SiteFooter() {
                 className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
               />
             </ServiceInquiryTrigger>
-          </p>
+          </div>
         </div>
       </div>
     </footer>

@@ -67,14 +67,39 @@ deleted. Every change is written to the audit log.
 On an agent's page: **Permissions** to change rules, **Settings** to edit the connection,
 rotate the API key or delete the agent.
 
-### 6. Website enquiries & demo requests
+### 6. Connecting your own agent (SDK / Event API)
+
+Use the SDK in `src/sdk/index.ts` (zero dependencies, TypeScript):
+
+```ts
+import { AgentOS } from "./sdk"; // copy src/sdk/index.ts into your agent
+const agentos = new AgentOS({
+  apiKey: process.env.AGENTOS_API_KEY!,
+  baseUrl: "http://localhost:3000",
+});
+agentos.agent.startHeartbeat();
+const task = await agentos.task.start({ name: "Find SaaS leads" });
+await task.llmCall({
+  provider: "anthropic",
+  model: "claude-sonnet",
+  inputTokens: 12430,
+  outputTokens: 2840,
+});
+await task.toolCall({ name: "web_search" });
+await task.complete({ result: { leadsFound: 47 } });
+```
+
+Or call the HTTP API from any language — see `API.md` (`POST /api/agent-events` with
+`Authorization: Bearer <key>` and an `Idempotency-Key` header).
+
+### 7. Website enquiries & demo requests
 
 The landing page's **Book Demo** button and the footer's **Velorex Studio — IT Services**
 link open forms. Submissions are emailed to velorexdesign@gmail.com once
 `EMAIL_PROVIDER_API_KEY` is set (see `ENV.md` → "Sending enquiry emails") and are always
 saved in the database (`npx prisma studio` → `Inquiry`).
 
-### 7. Settings & roles
+### 8. Settings & roles
 
 **Settings** holds your organization profile (owners and admins can edit).
 
@@ -90,19 +115,39 @@ saved in the database (`npx prisma studio` → `Inquiry`).
 
 ## Part 2 — Running & developing AgentOS
 
-### Fastest way to run it: Docker (Windows, macOS, Linux)
-
-Install **Docker Desktop**, then in the project folder:
+### Fastest way to run it (Windows, macOS, Linux) — only Node.js needed
 
 ```powershell
 cd Z:\agentos-platform
+git pull
+npm install
+npm run dev
+```
+
+Open **http://localhost:3000** → **Start Free**. `npm run dev` does everything:
+creates `.env` with generated secrets, starts a **built-in local database** (PostgreSQL
+running inside Node — nothing to install; the first start downloads it once), applies
+migrations and starts the app. Stop with `Ctrl+C`; your data is kept. To stop the
+background database too: `npm run db:local:stop`.
+
+### See it live: the demo agent
+
+1. In the app: **Agents → Connect Agent** → fill in name/department/model → **Connect Agent**.
+2. Copy the command shown on the success screen and run it in a **second terminal**:
+   ```powershell
+   npm run demo:agent -- --key aos_live_…
+   ```
+3. Open the **Dashboard**: the map turns **Live**, the agent switches to Working, the activity
+   feed streams model and tool calls, and Tasks today / Tokens count up. Agent page →
+   **Tasks** and **Activity** tabs show the full history.
+
+### Alternative: Docker
+
+```powershell
 docker compose up --build
 ```
 
-Open **http://localhost:3000** → _Start Free_. The first build takes a few minutes. This
-starts PostgreSQL (host port 5433) and the app, applies migrations and generates secrets
-automatically. Stop with `Ctrl+C`; data persists in Docker volumes. Optionally create
-`.env` first to set `EMAIL_PROVIDER_API_KEY` (see `ENV.md`).
+Starts PostgreSQL (host port 5433) and the app; migrations and secrets are automatic.
 
 ### Requirements (without Docker)
 

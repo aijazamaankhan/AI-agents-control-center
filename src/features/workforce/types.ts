@@ -41,10 +41,12 @@ export type ActivityKind =
   | "approval.requested"
   | "approval.granted"
   | "task.completed"
-  | "task.failed";
+  | "task.failed"
+  | "task.cancelled"
+  | "log";
 
 export interface ActivityEvent {
-  id: number;
+  id: number | string;
   at: number;
   agentId: string;
   agentName: string;

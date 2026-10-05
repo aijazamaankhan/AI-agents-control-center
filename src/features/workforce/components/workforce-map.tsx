@@ -5,11 +5,12 @@ import { useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { computeLayout, LAYOUT } from "../layout";
 import type { SimState } from "../simulation";
-import type { AgentRuntime, WorkforceDepartment } from "../types";
+import type { WorkforceDepartment } from "../types";
 import { STATUS_STYLE } from "../visuals";
 import { ActivityFeed } from "./activity-feed";
 import { DetailPanel } from "./detail-panel";
 import { MapCanvas, type Selection } from "./map-canvas";
+import { useLiveActivity, type LiveSeed } from "./use-live-activity";
 import { usePrefersReducedMotion, useWorkforceSim } from "./use-workforce-sim";
 
 interface WorkforceMapProps {
@@ -18,7 +19,7 @@ interface WorkforceMapProps {
   sample?: boolean;
   variant?: "dashboard" | "landing";
   /** Real agent state (no simulation). Provide whenever departments are the org's own data. */
-  live?: { runtime: Record<string, AgentRuntime> };
+  live?: LiveSeed;
   className?: string;
 }
 
@@ -32,18 +33,8 @@ export function WorkforceMap({
   const layout = useMemo(() => computeLayout(departments), [departments]);
   const sim = useWorkforceSim(departments, { enabled: !live });
   const { running, setRunning } = sim;
-  const state: SimState = useMemo(
-    () =>
-      live
-        ? {
-            agents: live.runtime,
-            events: [],
-            totals: { tokens: 0, cost: 0, completed: 0, failed: 0 },
-            seq: 0,
-          }
-        : sim.state,
-    [live, sim.state],
-  );
+  const liveFeed = useLiveActivity(live, Boolean(live));
+  const state: SimState = live ? liveFeed.state : sim.state;
   const reducedMotion = usePrefersReducedMotion();
   const [selection, setSelection] = useState<Selection>(null);
   const scroller = useRef<HTMLDivElement>(null);
@@ -83,6 +74,20 @@ export function WorkforceMap({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-sm font-semibold text-foreground">Workforce map</h2>
+            {live ? (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                title={liveFeed.connected ? "Receiving live events" : "Connecting to live events…"}
+              >
+                <span
+                  className={cn(
+                    "size-1.5 rounded-full",
+                    liveFeed.connected ? "animate-blink bg-primary" : "bg-muted",
+                  )}
+                />
+                {liveFeed.connected ? "Live" : "Connecting…"}
+              </span>
+            ) : null}
             {sample ? (
               <span
                 className="inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-[11px] font-medium text-warning"

@@ -121,7 +121,7 @@ describe("preview simulation", () => {
     let tokens = initial.totals.tokens;
     for (let i = 0; i < 300; i++) {
       const next = stepSim(s, SAMPLE_WORKFORCE, rng, i);
-      const fresh = next.events.filter((e) => e.id > s.seq);
+      const fresh = next.events.filter((e) => Number(e.id) > s.seq);
       tokens += fresh.reduce((sum, e) => sum + (e.tokens ?? 0), 0);
       s = next;
     }

@@ -58,14 +58,30 @@ same-origin `Origin` header (CSRF) — otherwise `403 FORBIDDEN`. Writes require
 | `GET /api/v1/analytics/*` (+ `?format=csv`)                            | 8     | session       |                                                                        |
 | `GET/POST /api/v1/budgets`, `GET /api/v1/alerts`                       | 9     | session       |                                                                        |
 
-### `POST /api/agent-events` (contract fixed now)
+### `POST /api/agent-events` — implemented (Phase 4)
+
+Headers: `Authorization: Bearer aos_live_…` (the agent's API key — the organization,
+agent and department are derived from it, never from the body), `Idempotency-Key`
+(1–200 chars `[A-Za-z0-9_-:.]`, **required**), `Content-Type: application/json`.
+
+| `event_type`         | Fields (besides optional `agent_id`, `occurred_at`, `metadata` ≤ 4 KB)                            |
+| -------------------- | ------------------------------------------------------------------------------------------------- |
+| `task.started`       | `name`, `description?`, `task_id?` (`task_<8–40 alnum>`, else generated)                          |
+| `llm.call`           | `provider`, `model`, `input_tokens`, `output_tokens`, `cached_tokens?`, `latency_ms?`, `task_id?` |
+| `tool.call`          | `tool_name`, `latency_ms?`, `success?` (default true), `task_id?`                                 |
+| `approval.requested` | `action`, `reason?`, `risk?` (`low`/`medium`/`high`), `task_id?`                                  |
+| `task.completed`     | `task_id`, `result?` (JSON ≤ 4 KB)                                                                |
+| `task.failed`        | `task_id`, `error?`                                                                               |
+| `task.cancelled`     | `task_id`, `reason?`                                                                              |
+| `log`                | `message`, `level?`                                                                               |
+
+Example:
 
 ```json
 {
   "event_type": "llm.call",
   "agent_id": "agt_xxx",
   "task_id": "task_xxx",
-  "execution_id": "exec_xxx",
   "provider": "anthropic",
   "model": "claude-sonnet",
   "input_tokens": 12430,
@@ -76,4 +92,24 @@ same-origin `Origin` header (CSRF) — otherwise `403 FORBIDDEN`. Writes require
 }
 ```
 
-`organization_id` is derived from the API key; `agent_id` must belong to it.
+Responses: `201 { data: { event_id, task_id, execution_id, duplicate: false } }`;
+same key + same payload again → `200` with the **original** ids and `duplicate: true`
+(no tokens, activity or events are added); same key + different payload → `409
+CONFLICT`. Errors: `401` bad/revoked key, `400 IDEMPOTENCY_KEY_REQUIRED`, `422`
+validation (incl. `occurred_at` > 5 min in the future or > 7 days old), `404` task not
+found **for this agent**, `409` finishing an already finished task, `429` rate limit
+(1,200/min per key).
+
+### `POST /api/agent/heartbeat` — implemented
+
+Body: `{ "status": "ONLINE" | "WORKING" | "IDLE" | "WAITING" | "FAILED", "current_task_id"?, "agent_id"?, "timestamp"? }`
+→ `200 { data: { ok, status, received_at, next_heartbeat_in_s: 30 } }`. Any event also
+counts as a heartbeat. No heartbeat/event for **2 minutes** → the agent is shown
+`OFFLINE` (it is never deleted or failed).
+
+### `GET /api/v1/activity/stream` — implemented (SSE)
+
+Session-authenticated Server-Sent Events for the signed-in organization:
+`event: activity` (one per new execution event, with agent/department names, summary,
+tokens) and `event: status` (`{ agentId: status }` for agents whose status changed).
+Polls the database every 2 s; connections recycle every 5 min (EventSource reconnects).

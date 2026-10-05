@@ -1,0 +1,136 @@
+// Shared helpers for the local setup/dev scripts (Windows, macOS, Linux).
+import { execSync, spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { createConnection } from "node:net";
+
+export const ENV_FILE = ".env";
+
+/** Built-in local database (Prisma Dev = PostgreSQL in Node). No install required. */
+export const LOCAL_DB = {
+  name: "agentos",
+  port: 51213,
+  dbPort: 51214,
+  shadowPort: 51215,
+  url: "postgres://postgres:postgres@localhost:51214/template1?sslmode=disable",
+};
+
+const isWindows = process.platform === "win32";
+
+export function ensureEnvFile() {
+  if (!existsSync(ENV_FILE)) {
+    copyFileSync(".env.example", ENV_FILE);
+    console.log("✔ Created .env from .env.example");
+  }
+  let env = readFileSync(ENV_FILE, "utf8");
+  for (const key of ["AUTH_SECRET", "ENCRYPTION_KEY"]) {
+    const re = new RegExp(`^${key}=\\s*$`, "m");
+    if (re.test(env) || !new RegExp(`^${key}=`, "m").test(env)) {
+      const line = `${key}=${randomBytes(32).toString("base64")}`;
+      env = re.test(env) ? env.replace(re, line) : `${env.trimEnd()}\n${line}\n`;
+      console.log(`✔ Generated ${key}`);
+    }
+  }
+  writeFileSync(ENV_FILE, env);
+}
+
+export function readEnv() {
+  const out = {};
+  for (const line of readFileSync(ENV_FILE, "utf8").split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+    if (m) out[m[1]] = m[2].replace(/^["']|["']$/g, "");
+  }
+  return out;
+}
+
+export function setEnvValue(key, value, comment) {
+  let env = readFileSync(ENV_FILE, "utf8");
+  const re = new RegExp(`^${key}=.*$`, "m");
+  const line = `${key}=${value}`;
+  env = re.test(env)
+    ? env.replace(re, line)
+    : `${env.trimEnd()}\n${comment ? `# ${comment}\n` : ""}${line}\n`;
+  writeFileSync(ENV_FILE, env);
+}
+
+function portOpen(port, host = "127.0.0.1") {
+  return new Promise((resolve) => {
+    const socket = createConnection({ port, host });
+    socket.once("connect", () => {
+      socket.end();
+      resolve(true);
+    });
+    socket.once("error", () => resolve(false));
+    socket.setTimeout(1000, () => {
+      socket.destroy();
+      resolve(false);
+    });
+  });
+}
+
+/** The DATABASE_URL older .env.example files shipped with (a local PostgreSQL many people don't have). */
+const OLD_EXAMPLE_URL = "postgresql://agentos:agentos@localhost:5432/agentos";
+
+export function usesLocalDb(databaseUrl) {
+  return !databaseUrl || databaseUrl === LOCAL_DB.url;
+}
+
+/** Starts the built-in database in the background (idempotent) and waits until it accepts connections. */
+export async function ensureLocalDb() {
+  if (await portOpen(LOCAL_DB.dbPort)) return LOCAL_DB.url;
+  console.log("▶ Starting the built-in local database (first run downloads it, ~1 min)…");
+  execSync(
+    `npx prisma dev -n ${LOCAL_DB.name} --port ${LOCAL_DB.port} --db-port ${LOCAL_DB.dbPort} --shadow-db-port ${LOCAL_DB.shadowPort} --detach`,
+    { stdio: ["ignore", "ignore", "inherit"], shell: true },
+  );
+  for (let i = 0; i < 60; i++) {
+    if (await portOpen(LOCAL_DB.dbPort)) {
+      console.log("✔ Local database running on port", LOCAL_DB.dbPort);
+      return LOCAL_DB.url;
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  throw new Error("The local database did not start. Run `npx prisma dev ls` to inspect it.");
+}
+
+export function migrate(databaseUrl) {
+  execSync("npx prisma migrate deploy", {
+    stdio: "inherit",
+    shell: true,
+    env: { ...process.env, DATABASE_URL: databaseUrl },
+  });
+}
+
+/** Prepares .env + database. Returns the env to start the app with. */
+export async function prepare() {
+  ensureEnvFile();
+  const env = readEnv();
+  let databaseUrl = env.DATABASE_URL;
+  if (databaseUrl === OLD_EXAMPLE_URL && !(await portOpen(5432))) {
+    console.log(
+      "ℹ No PostgreSQL found on localhost:5432 — switching to the built-in local database.",
+    );
+    databaseUrl = "";
+  }
+  if (usesLocalDb(databaseUrl)) {
+    databaseUrl = await ensureLocalDb();
+    if (env.DATABASE_URL !== databaseUrl) {
+      setEnvValue(
+        "DATABASE_URL",
+        databaseUrl,
+        "Built-in local database (managed by `npm run dev`)",
+      );
+      console.log("✔ DATABASE_URL set to the built-in local database");
+    }
+  }
+  migrate(databaseUrl);
+  return { ...process.env, ...readEnv(), DATABASE_URL: databaseUrl };
+}
+
+export function run(command, env) {
+  const child = spawn(command, { stdio: "inherit", shell: true, env });
+  const stop = () => child.kill(isWindows ? undefined : "SIGINT");
+  process.on("SIGINT", stop);
+  process.on("SIGTERM", stop);
+  child.on("exit", (code) => process.exit(code ?? 0));
+}

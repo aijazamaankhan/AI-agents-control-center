@@ -117,20 +117,67 @@ test("signup → create company → dashboard → settings → sign out → sign
   await page.getByRole("button", { name: "Connect Agent" }).click();
   await expect(page.getByRole("heading", { name: /Lead Research Agent connected/ })).toBeVisible();
   await expect(page.getByTestId("api-key")).toHaveText(/^aos_live_/);
+  const apiKey = (await page.getByTestId("api-key").textContent())!.trim();
+
+  // Phase 4: the agent reports work with its API key (same calls the SDK makes).
+  const report = (body: object, key = crypto.randomUUID()) =>
+    page.request.post("/api/agent-events", {
+      headers: { Authorization: `Bearer ${apiKey}`, "Idempotency-Key": key },
+      data: body,
+    });
+  const started = await (
+    await report({ event_type: "task.started", name: "Find 50 SaaS companies in India" })
+  ).json();
+  const llmKey = crypto.randomUUID();
+  const llm = {
+    event_type: "llm.call",
+    task_id: started.data.task_id,
+    provider: "anthropic",
+    model: "claude-sonnet",
+    input_tokens: 12430,
+    output_tokens: 2840,
+  };
+  expect((await report(llm, llmKey)).status()).toBe(201);
+  expect((await report(llm, llmKey)).status()).toBe(200); // duplicate → not double-counted
+  expect(
+    (
+      await report({
+        event_type: "tool.call",
+        task_id: started.data.task_id,
+        tool_name: "web_search",
+      })
+    ).status(),
+  ).toBe(201);
+  expect(
+    (
+      await report({
+        event_type: "task.completed",
+        task_id: started.data.task_id,
+        result: { leadsFound: 47 },
+      })
+    ).status(),
+  ).toBe(201);
+
   await page.getByRole("link", { name: "Open agent" }).click();
 
   await expect(page.getByRole("heading", { name: "Lead Research Agent", level: 1 })).toBeVisible();
-  await expect(page.getByText("Offline").first()).toBeVisible();
+  await expect(page.getByText("Online").first()).toBeVisible();
   await page.getByRole("link", { name: "Permissions" }).click();
   await expect(page.getByText("Approval required")).toBeVisible();
   await expect(page.getByText("Send external email").first()).toBeVisible();
 
+  await page.getByRole("link", { name: "Tasks" }).click();
+  await expect(page.getByRole("cell", { name: /Find 50 SaaS companies in India/ })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "15.27K" })).toBeVisible(); // 12,430 + 2,840 counted once
+
   await page.goto("/dashboard");
   const liveMap = page.getByRole("region", { name: "Workforce map" });
   await expect(liveMap.getByText("Sample workforce · simulated")).toHaveCount(0);
-  await expect(
-    liveMap.getByRole("button", { name: /^Lead Research Agent, Offline/ }),
-  ).toBeVisible();
+  await expect(liveMap.getByText("Live", { exact: true })).toBeVisible();
+  await expect(liveMap.getByRole("button", { name: /^Lead Research Agent, Idle/ })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Workforce KPIs" })).toContainText(
+    "1 completed · 0 failed",
+  );
 
   // A department with agents can't be deleted.
   await page.goto("/departments");
@@ -184,6 +231,12 @@ test("health endpoint reports database status", async ({ request }) => {
 });
 
 test("landing: Book Demo and Velorex Studio enquiry popups submit", async ({ page }) => {
+  // Regression: invalid nesting (<dialog> inside <p>) broke hydration — any console error fails.
+  const consoleErrors: string[] = [];
+  page.on("console", (m) => {
+    if (m.type() === "error") consoleErrors.push(m.text());
+  });
+  page.on("pageerror", (e) => consoleErrors.push(e.message));
   await page.goto("/");
   await expect(
     page.getByRole("heading", { name: "Everything to run an AI workforce" }),
@@ -218,4 +271,5 @@ test("landing: Book Demo and Velorex Studio enquiry popups submit", async ({ pag
   await expect(inquiry.getByText(/Your request has been received/)).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(inquiry).toBeHidden();
+  expect(consoleErrors).toEqual([]);
 });

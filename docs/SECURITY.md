@@ -98,6 +98,24 @@ convenience but is never the enforcement point.
 - **Public forms** (`inquiries`): honeypot field, 5 requests/hour/IP, HTML-escaped emails,
   reply-to set to the customer, stored before sending so nothing is lost.
 
+## 6c. Implemented in Phase 4 (event ingestion)
+
+- **Agent authentication**: `Authorization: Bearer <key>`; the key's SHA-256 is looked up,
+  revoked keys are rejected, and organization/agent/department come from the key — a
+  body `agent_id` that doesn't match is `403`. Tasks are only addressable by their own
+  agent (another agent's or tenant's task id → `404`).
+- **Idempotency**: unique `(organization_id, idempotency_key)` plus a SHA-256 of the
+  canonical payload; duplicates return the original result inside the same guarantees,
+  concurrent duplicates resolve via the unique constraint, key reuse with a different
+  payload is `409`.
+- **Privacy**: AgentOS stores token counts, timings, tool _names_ and short summaries —
+  never prompts or tool arguments. `metadata` and `result` are size-limited (4 KB) and
+  secret-looking keys (`password`, `token`, `api_key`, …) are redacted before storage.
+- **Abuse limits**: 1,200 requests/min per API key; `occurred_at` bounded (≤ 5 min in
+  the future, ≤ 7 days old).
+- **Live stream**: `/api/v1/activity/stream` requires a session and only ever queries
+  the caller's organization.
+
 ## 7. HTTP security headers
 
 Set in `next.config.ts` for all routes: `Content-Security-Policy` (production),

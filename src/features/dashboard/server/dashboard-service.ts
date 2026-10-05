@@ -8,6 +8,8 @@ import {
 } from "@/features/organizations/server/organization-service";
 import type { AgentRuntime, Provider, WorkforceDepartment } from "@/features/workforce/types";
 import { db } from "@/lib/db/client";
+import { activeTaskNames, recentActivity, todayStats } from "@/features/events/server/activity";
+import { toActivityEvent } from "@/features/workforce/live";
 
 export interface ChecklistItem {
   key: string;
@@ -106,13 +108,16 @@ export async function getWorkforceSnapshot(ctx: OrgContext) {
         tasks: [],
       })),
   }));
+  const activeTasks = await activeTaskNames(ctx);
   const runtime: Record<string, AgentRuntime> = Object.fromEntries(
     agents.map((a) => [
       a.id,
       {
         status: runtimeStatus(a.status),
         stage: null,
-        task: null,
+        task: ["WORKING", "WAITING"].includes(runtimeStatus(a.status))
+          ? (activeTasks[a.id] ?? null)
+          : null,
         tool: null,
         tokens: 0,
         cost: 0,
@@ -125,17 +130,21 @@ export async function getWorkforceSnapshot(ctx: OrgContext) {
 }
 
 export async function getDashboardOverview(ctx: OrgContext) {
-  const [organization, checklist, counts, snapshot] = await Promise.all([
-    getOrganization(ctx),
+  const organization = await getOrganization(ctx);
+  const [checklist, counts, snapshot, today, recent] = await Promise.all([
     getOnboardingChecklist(ctx),
     agentStatusCounts(ctx),
     getWorkforceSnapshot(ctx),
+    todayStats(ctx, organization.timezone),
+    recentActivity(ctx, { limit: 20 }),
   ]);
   return {
     organization,
     checklist,
     counts,
     snapshot,
+    today,
+    recentEvents: recent.map(toActivityEvent),
     greeting: greetingFor(new Date(), organization.timezone),
   };
 }

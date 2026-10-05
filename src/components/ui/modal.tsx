@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useEffect, useId, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 interface ModalProps {
@@ -13,18 +14,38 @@ interface ModalProps {
   className?: string;
 }
 
-/** Native <dialog>: built-in focus trapping, Esc to close, inert background. */
+/**
+ * Native <dialog> (focus trap, Esc, inert background), portalled to <body> and
+ * mounted only while open — so a trigger may live anywhere (even inside a <p>)
+ * without producing invalid HTML or a hydration mismatch.
+ */
 export function Modal({ open, onClose, title, description, children, className }: ModalProps) {
+  if (!open) return null;
+  return createPortal(
+    <ModalDialog onClose={onClose} title={title} description={description} className={className}>
+      {children}
+    </ModalDialog>,
+    document.body,
+  );
+}
+
+function ModalDialog({
+  onClose,
+  title,
+  description,
+  children,
+  className,
+}: Omit<ModalProps, "open">) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const descId = useId();
 
   useEffect(() => {
+    // No cleanup: calling close() there would fire onClose during React Strict Mode's
+    // dev-only remount and dismiss the dialog instantly. Unmounting removes it anyway.
     const dialog = ref.current;
-    if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
-  }, [open]);
+    if (dialog && !dialog.open) dialog.showModal();
+  }, []);
 
   return (
     <dialog
@@ -41,31 +62,29 @@ export function Modal({ open, onClose, title, description, children, className }
         className,
       )}
     >
-      {open ? (
-        <div className="p-6 sm:p-7">
-          <div className="mb-5 flex items-start justify-between gap-4">
-            <div>
-              <h2 id={titleId} className="text-lg font-semibold text-foreground">
-                {title}
-              </h2>
-              {description ? (
-                <p id={descId} className="mt-1 text-sm text-muted">
-                  {description}
-                </p>
-              ) : null}
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close"
-              className="flex size-9 shrink-0 items-center justify-center rounded-control text-muted hover:bg-raised hover:text-foreground"
-            >
-              <X aria-hidden className="size-5" />
-            </button>
+      <div className="p-6 sm:p-7">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <h2 id={titleId} className="text-lg font-semibold text-foreground">
+              {title}
+            </h2>
+            {description ? (
+              <p id={descId} className="mt-1 text-sm text-muted">
+                {description}
+              </p>
+            ) : null}
           </div>
-          {children}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="flex size-9 shrink-0 items-center justify-center rounded-control text-muted hover:bg-raised hover:text-foreground"
+          >
+            <X aria-hidden className="size-5" />
+          </button>
         </div>
-      ) : null}
+        {children}
+      </div>
     </dialog>
   );
 }

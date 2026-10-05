@@ -86,6 +86,29 @@ Update this file at the end of every phase.
 - Audit: agent created/updated/deleted, credential updated, permission changed (diff),
   API key rotated, connection tested.
 
+### Run-it-anywhere fixes
+
+- `npm run dev` now prepares everything: `.env` + secrets, a **built-in local database**
+  (Prisma Dev — PostgreSQL in Node, no install), migrations, then Next.js. Older `.env`
+  files pointing at a missing PostgreSQL are switched over automatically.
+- Fixed a dev-mode hydration failure (popup `<dialog>` rendered inside a `<p>`) that could
+  break clicks such as Start Free; popups now render in a portal. Fixed a Strict Mode
+  issue that closed popups instantly in development. Added the app icon.
+
+### Phase 4 — Event ingestion
+
+- `POST /api/agent-events` (API-key auth, required Idempotency-Key, 8 event types),
+  `POST /api/agent/heartbeat`, offline detection after 2 minutes of silence.
+- Tables `tasks`, `executions`, `execution_events` (immutable, idempotent, payload-hashed);
+  task token/call counters maintained in the same transaction as each event.
+- **AgentOS SDK** (`src/sdk/index.ts`, zero dependencies): `task.start/complete/fail`,
+  `llm.call`, `tool.call`, `approval.request`, heartbeats; retries reuse the same key.
+- **Demo agent** (`npm run demo:agent -- --key …`) to see live data immediately.
+- Live dashboard over Server-Sent Events: map goes **Live**, agents animate by real
+  status/stage, activity feed streams, KPI cards (Tasks today, Tokens) refresh.
+- Agent page: real Tasks and Activity tabs, today's tasks/success rate/latency/tokens;
+  department page: today's tasks/success/tokens.
+
 ## 🔜 Next
 
 | Phase | Scope                 | Key deliverables                                                                                                                                                               |

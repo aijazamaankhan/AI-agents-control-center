@@ -29,6 +29,16 @@ import {
 import { RULE_STYLE } from "@/features/agents/rule-style";
 import { CONNECTION_LABEL, relativeTime } from "@/features/agents/format";
 import { getAgent } from "@/features/agents/server/agent-service";
+import { ActivityList } from "@/features/events/components/activity-list";
+import { TaskTable } from "@/features/events/components/task-table";
+import {
+  avgLlmLatencyToday,
+  listTasks,
+  recentActivity,
+  todayStats,
+} from "@/features/events/server/activity";
+import { getOrganization } from "@/features/organizations/server/organization-service";
+import { formatTokens } from "@/features/workforce/format";
 import { listDepartments } from "@/features/departments/server/department-service";
 import { AppError } from "@/lib/api/errors";
 import { requireOrgContext } from "@/lib/auth/guards";
@@ -71,6 +81,15 @@ export default async function AgentPage({
   const tab: Tab = visibleTabs.some((t) => t.key === rawTab) ? (rawTab as Tab) : "overview";
   const departments = tab === "settings" ? await listDepartments(ctx) : [];
   const activeKey = agent.apiKeys[0];
+  const org = await getOrganization(ctx);
+  const [stats, latency, tasks, activity] = await Promise.all([
+    todayStats(ctx, org.timezone, { agentId: agent.id }),
+    avgLlmLatencyToday(ctx, agent.id, org.timezone),
+    tab === "tasks" ? listTasks(ctx, { agentId: agent.id, limit: 100 }) : Promise.resolve([]),
+    tab === "activity"
+      ? recentActivity(ctx, { agentId: agent.id, limit: 100 })
+      : Promise.resolve([]),
+  ]);
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-6">
@@ -142,38 +161,44 @@ export default async function AgentPage({
           >
             <KpiCard
               label="Tasks today"
-              value="0"
+              value={String(stats.tasks)}
               icon={ListChecks}
               accent="var(--color-cyan)"
-              caption="No events yet"
+              caption={stats.tasks ? `${stats.running} running` : "No tasks yet today"}
             />
             <KpiCard
               label="Success rate"
-              value="—"
+              value={stats.successRate === null ? "—" : `${Math.round(stats.successRate * 100)}%`}
               icon={Percent}
               accent="var(--color-primary)"
-              caption="No tasks yet"
+              caption={`${stats.completed} done · ${stats.failed} failed`}
             />
             <KpiCard
               label="Avg latency"
-              value="—"
+              value={
+                latency === null
+                  ? "—"
+                  : latency >= 1000
+                    ? `${(latency / 1000).toFixed(1)}s`
+                    : `${latency}ms`
+              }
               icon={Gauge}
               accent="var(--color-purple)"
-              caption="No calls yet"
+              caption="LLM calls today"
             />
             <KpiCard
               label="Tokens today"
-              value="0"
+              value={formatTokens(stats.tokens)}
               icon={Coins}
               accent="var(--color-purple)"
-              caption="No events yet"
+              caption={`${formatTokens(stats.inputTokens)} in · ${formatTokens(stats.outputTokens)} out`}
             />
             <KpiCard
               label="Cost today"
               value="$0.00"
               icon={CircleDollarSign}
               accent="var(--color-lime)"
-              caption="No events yet"
+              caption="Pricing arrives in Phase 6"
             />
             <KpiCard
               label="Last active"
@@ -261,33 +286,69 @@ export default async function AgentPage({
       ) : null}
 
       {tab === "tasks" ? (
-        <Card className="rounded-[22px]">
-          <EmptyState
-            icon={ListChecks}
-            title="No tasks yet"
-            description="Tasks appear here when this agent reports them with its API key (event ingestion arrives in Phase 4)."
-          />
+        <Card className="overflow-hidden rounded-[22px]">
+          {tasks.length ? (
+            <TaskTable tasks={tasks} />
+          ) : (
+            <EmptyState
+              icon={ListChecks}
+              title="No tasks yet"
+              description="Tasks appear here when this agent reports them with its API key."
+            />
+          )}
         </Card>
       ) : null}
 
       {tab === "activity" ? (
-        <Card className="rounded-[22px]">
-          <EmptyState
-            icon={Activity}
-            title="No activity yet"
-            description="Agent activity will appear here when your agents start working."
-          />
+        <Card className="overflow-hidden rounded-[22px]">
+          {activity.length ? (
+            <ActivityList items={activity} showAgent={false} />
+          ) : (
+            <EmptyState
+              icon={Activity}
+              title="No activity yet"
+              description="Agent activity will appear here when your agents start working."
+            />
+          )}
         </Card>
       ) : null}
 
       {tab === "usage" ? (
-        <Card className="rounded-[22px]">
-          <EmptyState
-            icon={Coins}
-            title="No usage yet"
-            description="Input, output and cached tokens and their cost will be charted here once the agent reports model calls."
-          />
-        </Card>
+        <div className="space-y-4">
+          <section aria-label="Token usage today" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <KpiCard
+              label="Input tokens"
+              value={formatTokens(stats.inputTokens)}
+              icon={Coins}
+              accent="var(--color-cyan)"
+              caption="Today"
+            />
+            <KpiCard
+              label="Output tokens"
+              value={formatTokens(stats.outputTokens)}
+              icon={Coins}
+              accent="var(--color-purple)"
+              caption="Today"
+            />
+            <KpiCard
+              label="Cached tokens"
+              value={formatTokens(stats.cachedTokens)}
+              icon={Coins}
+              accent="var(--color-lime)"
+              caption="Today"
+            />
+            <KpiCard
+              label="Total tokens"
+              value={formatTokens(stats.tokens)}
+              icon={Coins}
+              accent="var(--color-foreground)"
+              caption="Today"
+            />
+          </section>
+          <p className="text-sm text-muted">
+            Cost per call, charts and history arrive with the pricing system in Phase 6.
+          </p>
+        </div>
       ) : null}
 
       {tab === "permissions" ? (

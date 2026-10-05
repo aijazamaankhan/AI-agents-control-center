@@ -49,6 +49,19 @@ export function ApiKeyReveal({ apiKey, agentId }: { apiKey: string; agentId: str
         </code>
         <CopyButton value={apiKey} />
       </div>
+      <div className="rounded-control border border-primary/30 bg-primary/5 p-3">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="text-[11px] tracking-wide text-primary uppercase">
+            Try it now — run the demo agent
+          </span>
+          <CopyButton value={`npm run demo:agent -- --key ${apiKey}`} label="Copy command" />
+        </div>
+        <pre className="scroller-x font-mono text-xs leading-5 text-foreground">{`npm run demo:agent -- --key ${apiKey}`}</pre>
+        <p className="mt-2 text-xs text-muted">
+          Run it in a second terminal in the project folder. It reports tasks, model calls and tool
+          calls with this key, so the dashboard comes alive.
+        </p>
+      </div>
       <div className="rounded-control border border-border bg-background p-3">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-[11px] tracking-wide text-muted uppercase">

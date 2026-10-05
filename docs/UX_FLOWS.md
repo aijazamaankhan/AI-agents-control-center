@@ -91,3 +91,10 @@ Every data route has `loading.tsx` (skeleton) and `error.tsx`
 - Footer **Velorex Studio — IT Services** → dialog: name, email, company, phone,
   service, budget, timeline, project details → "Request sent". Both close with Esc,
   the ✕ button or a backdrop click, and trap focus while open.
+
+## Live dashboard (Phase 4)
+
+Once agents exist the map shows a **Live** badge (Connecting… while the SSE stream opens).
+Agent chips animate by real stage — Thinking (LLM call), Using <tool>, Needs approval —
+and the feed streams new events. KPI cards refresh ~1.5 s after a task finishes or a
+status changes. The "Next step" card shows the demo-agent command.

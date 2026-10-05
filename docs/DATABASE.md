@@ -22,7 +22,7 @@ after merge).
 - **Secrets**: never stored in plaintext. Agent credentials: AES-256-GCM envelope
   (`ENCRYPTION_KEY`). Session tokens and API keys: stored as SHA-256 hashes.
 
-## Implemented models (Phases 1–3)
+## Implemented models (Phases 1–4)
 
 | Model          | Table           | Purpose                                                                                     |
 | -------------- | --------------- | ------------------------------------------------------------------------------------------- |
@@ -44,13 +44,14 @@ before an org exists); all org-scoped actions set it.
 | `AgentCapability` | `agent_capabilities` | Phase 3: `key`, `label`, `rule` (`ALLOWED`/`DENIED`/`APPROVAL_REQUIRED`); unique `(agent_id, key)` |
 | `Inquiry` | `inquiries` | Public (non-tenant) website enquiries & demo requests; stored before emailing, with delivery status |
 
+| `Task` | `tasks` | Phase 4: agent, department snapshot, status, timing, token counters (incremented per event), call counts, small `result`, `error` |
+| `Execution` | `executions` | Phase 4: one run of a task |
+| `ExecutionEvent` | `execution_events` | Phase 4: **immutable**; unique `(organization_id, idempotency_key)` + `payload_hash`; type, tokens, latency, tool, short `summary`, redacted `metadata` |
+
 ## Planned models (later phases — design fixed, not yet migrated)
 
 | Model                  | Phase | Notes                                                                             |
 | ---------------------- | ----- | --------------------------------------------------------------------------------- |
-| `Task`                 | 4     | status `QUEUED                                                                    | RUNNING | WAITING | COMPLETED | FAILED | CANCELLED` |
-| `Execution`            | 4     | one run of a task                                                                 |
-| `ExecutionEvent`       | 4     | immutable; unique `(organization_id, idempotency_key)`                            |
 | `ToolCall`             | 4     | tool name, duration, status (arguments not stored by default)                     |
 | `ModelUsage`           | 6     | provider, model, input/output/cached tokens, latency                              |
 | `Pricing`              | 6     | provider, model, input/output/cached price per 1M tokens, effective_from, version |

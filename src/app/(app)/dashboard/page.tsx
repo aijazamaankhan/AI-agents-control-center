@@ -18,6 +18,7 @@ import { OnboardingChecklist } from "@/features/dashboard/components/onboarding-
 import { getDashboardOverview } from "@/features/dashboard/server/dashboard-service";
 import { WorkforceMap } from "@/features/workforce/components/workforce-map";
 import { SAMPLE_WORKFORCE } from "@/features/workforce/sample-data";
+import { formatTokens as formatCompact } from "@/features/workforce/format";
 import { requireOrgContext } from "@/lib/auth/guards";
 import { can } from "@/lib/security/permissions";
 
@@ -25,14 +26,14 @@ export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
   const ctx = await requireOrgContext();
-  const { greeting, checklist, counts, snapshot } = await getDashboardOverview(ctx);
+  const { greeting, checklist, counts, snapshot, today, recentEvents } =
+    await getDashboardOverview(ctx);
   const firstName = ctx.user.name.split(/\s+/)[0];
   const hasAgents = counts.total > 0;
   const hasDepartments = snapshot.workforce.length > 0;
   const canManage = can(ctx.role, "agents:manage");
-  const noEvents = "Available once agents report events";
 
-  // Agent counts are real; task/token/cost metrics arrive with event ingestion (Phase 4–6).
+  // All counts are real. Cost needs the pricing table (Phase 6), so it stays $0.00 until then.
   const kpis = [
     {
       label: "Total agents",
@@ -67,17 +68,27 @@ export default async function DashboardPage() {
     {
       label: "Tasks today",
       icon: ListChecks,
-      value: "0",
+      value: String(today.tasks),
       accent: "var(--color-cyan)",
-      caption: noEvents,
+      caption: today.tasks
+        ? `${today.completed} completed · ${today.failed} failed`
+        : "No tasks yet today",
     },
-    { label: "Tokens", icon: Coins, value: "0", accent: "var(--color-purple)", caption: noEvents },
+    {
+      label: "Tokens",
+      icon: Coins,
+      value: formatCompact(today.tokens),
+      accent: "var(--color-purple)",
+      caption: today.tokens
+        ? `${formatCompact(today.inputTokens)} in · ${formatCompact(today.outputTokens)} out`
+        : "Today",
+    },
     {
       label: "AI cost",
       icon: CircleDollarSign,
       value: "$0.00",
       accent: "var(--color-lime)",
-      caption: noEvents,
+      caption: "Pricing arrives in Phase 6",
     },
   ];
 
@@ -118,7 +129,19 @@ export default async function DashboardPage() {
       </section>
 
       {hasAgents ? (
-        <WorkforceMap departments={snapshot.workforce} live={{ runtime: snapshot.runtime }} />
+        <WorkforceMap
+          departments={snapshot.workforce}
+          live={{
+            runtime: snapshot.runtime,
+            events: recentEvents,
+            totals: {
+              tokens: today.tokens,
+              cost: 0,
+              completed: today.completed,
+              failed: today.failed,
+            },
+          }}
+        />
       ) : (
         <WorkforceMap departments={SAMPLE_WORKFORCE} sample />
       )}
@@ -131,9 +154,11 @@ export default async function DashboardPage() {
             </p>
             <h2 className="mt-2 text-xl font-semibold text-foreground">Bring your agents online</h2>
             <p className="mt-2 max-w-xl text-sm text-muted">
-              Connected agents show as <strong className="text-foreground">Offline</strong> until
-              they send a heartbeat or event with their API key. Live status, tasks, tokens and cost
-              then appear here automatically.
+              Agents show as <strong className="text-foreground">Offline</strong> until they send a
+              heartbeat or event with their API key. Try it with the demo agent:{" "}
+              <code className="rounded bg-raised px-1.5 py-0.5 font-mono text-xs text-foreground">
+                npm run demo:agent -- --key aos_live_…
+              </code>
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               <Link href="/agents" className={buttonStyles("secondary", "md")}>

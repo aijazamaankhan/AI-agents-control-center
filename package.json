@@ -8,7 +8,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/dev.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -24,7 +24,10 @@
     "db:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
     "setup": "node scripts/setup.mjs",
-    "docker:up": "docker compose up --build"
+    "docker:up": "docker compose up --build",
+    "dev:next": "next dev",
+    "db:local:stop": "prisma dev stop agentos",
+    "demo:agent": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/demo-agent.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

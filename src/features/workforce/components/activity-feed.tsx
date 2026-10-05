@@ -13,6 +13,8 @@ const KIND_LABEL: Record<ActivityKind, { label: string; color: string }> = {
   "approval.granted": { label: "Approved", color: "var(--color-primary)" },
   "task.completed": { label: "Completed", color: "var(--color-primary)" },
   "task.failed": { label: "Failed", color: "var(--color-error)" },
+  "task.cancelled": { label: "Cancelled", color: "var(--color-muted)" },
+  log: { label: "Log", color: "var(--color-muted)" },
 };
 
 interface ActivityFeedProps {

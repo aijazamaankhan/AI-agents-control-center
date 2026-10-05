@@ -64,3 +64,13 @@ server-side when an agent requests an action (Phase 7).
 - Capabilities carry a rule: `ALLOWED`, `APPROVAL_REQUIRED`, `DENIED`. Enforcement on
   agent action requests and the approval queue arrive in Phase 7.
 - Status is `OFFLINE` until the agent reports (Phase 4 heartbeat/events).
+
+## Implemented in Phase 4
+
+- SDK: `src/sdk/index.ts` — `new AgentOS({ apiKey, baseUrl })`, `agent.startHeartbeat()`,
+  `task.start()` → handle with `llmCall`, `toolCall`, `requestApproval`, `complete`, `fail`.
+  Calls without a task id use the current task. Network/5xx/429 retries reuse the same
+  Idempotency-Key, so a retry can never double-count.
+- Status lifecycle: event/heartbeat → `ONLINE`/`WORKING`/`WAITING`/`FAILED`; 2 minutes of
+  silence → `OFFLINE`.
+- Try it: `npm run demo:agent -- --key aos_live_…`.

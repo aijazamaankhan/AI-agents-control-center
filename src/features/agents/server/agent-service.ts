@@ -8,6 +8,7 @@ import { decryptSecret, encryptSecret, generateApiKey, secretHint } from "@/lib/
 import { assertPermission } from "@/lib/security/permissions";
 import { Prisma } from "@/generated/prisma/client";
 import type { AgentStatus } from "@/generated/prisma/enums";
+import { sweepStaleAgents } from "@/features/events/server/ingest";
 import { agentNameKey, credentialPayload, type AgentInput, type CapabilityInput } from "../schemas";
 
 const DUPLICATE = "An agent with this name already exists.";
@@ -76,6 +77,7 @@ export async function listAgents(
   ctx: OrgContext,
   filters: AgentFilters = {},
 ): Promise<AgentListItem[]> {
+  await sweepStaleAgents(ctx.organizationId);
   return db.agent.findMany({
     where: {
       organizationId: ctx.organizationId,
@@ -89,6 +91,7 @@ export async function listAgents(
 }
 
 export async function getAgent(ctx: OrgContext, id: string): Promise<AgentDetail> {
+  await sweepStaleAgents(ctx.organizationId);
   const agent = await db.agent.findFirst({
     where: { id, organizationId: ctx.organizationId },
     select: agentDetailSelect,
@@ -98,6 +101,7 @@ export async function getAgent(ctx: OrgContext, id: string): Promise<AgentDetail
 }
 
 export async function agentStatusCounts(ctx: OrgContext) {
+  await sweepStaleAgents(ctx.organizationId);
   const rows = await db.agent.groupBy({
     by: ["status"],
     where: { organizationId: ctx.organizationId },

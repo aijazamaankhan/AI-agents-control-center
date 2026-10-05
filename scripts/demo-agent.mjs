@@ -1,0 +1,102 @@
+#!/usr/bin/env node
+// Demo agent: reports realistic activity to AgentOS with the SDK, so you can see the
+// dashboard, workforce map, tasks and activity come alive.
+//
+//   npm run demo:agent -- --key aos_live_xxx [--url http://localhost:3000] [--tasks 5] [--fast]
+//
+// (Get the key from Agents → Connect Agent. Ctrl+C to stop.)
+import { AgentOS } from "../src/sdk/index.ts";
+
+const args = process.argv.slice(2);
+const arg = (name, fallback) => {
+  const i = args.indexOf(`--${name}`);
+  return i >= 0 && args[i + 1] && !args[i + 1].startsWith("--") ? args[i + 1] : fallback;
+};
+const apiKey = arg("key", process.env.AGENTOS_API_KEY);
+const baseUrl = arg("url", process.env.AGENTOS_URL ?? "http://localhost:3000");
+const maxTasks = Number(arg("tasks", "0")) || Infinity;
+const fast = args.includes("--fast");
+
+if (!apiKey) {
+  console.error(
+    "Usage: npm run demo:agent -- --key aos_live_… [--url http://localhost:3000] [--tasks 5] [--fast]",
+  );
+  process.exit(1);
+}
+
+const pause = (min, max) =>
+  new Promise((r) => setTimeout(r, fast ? 50 : min + Math.random() * (max - min)));
+const pick = (xs) => xs[Math.floor(Math.random() * xs.length)];
+const TASKS = [
+  "Find 50 SaaS companies in India",
+  "Enrich Q4 pipeline accounts",
+  "Draft follow-ups for demo no-shows",
+  "Summarize yesterday's support tickets",
+  "Reconcile September invoices",
+  "Score inbound leads",
+];
+const TOOLS = ["web_search", "crm.read", "enrich_company", "email.draft", "sheets.write"];
+const MODELS = [
+  ["anthropic", "Claude Sonnet"],
+  ["anthropic", "Claude Haiku"],
+  ["openai", "GPT-5 mini"],
+];
+
+const agentos = new AgentOS({ apiKey, baseUrl });
+const log = (...m) => console.log(new Date().toLocaleTimeString(), ...m);
+
+const stopHeartbeat = agentos.agent.startHeartbeat(fast ? 2000 : 20_000);
+process.on("SIGINT", () => {
+  stopHeartbeat();
+  log("Stopped. The agent will show Offline in about 2 minutes.");
+  process.exit(0);
+});
+
+log(`Connected to ${baseUrl}. Reporting activity… (Ctrl+C to stop)`);
+try {
+  for (let n = 1; n <= maxTasks; n++) {
+    const task = await agentos.task.start({ name: pick(TASKS) });
+    log(`▶ Task ${task.id} started`);
+    const calls = 1 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < calls; i++) {
+      await pause(800, 2500);
+      const [provider, model] = pick(MODELS);
+      const inputTokens = 1500 + Math.floor(Math.random() * 12000);
+      const outputTokens = 300 + Math.floor(Math.random() * 3000);
+      await task.llmCall({
+        provider,
+        model,
+        inputTokens,
+        outputTokens,
+        latencyMs: 400 + Math.floor(Math.random() * 2000),
+      });
+      log(`  LLM ${model}: ${inputTokens} in / ${outputTokens} out`);
+      await pause(500, 1500);
+      const tool = pick(TOOLS);
+      await task.toolCall({ name: tool, latencyMs: 200 + Math.floor(Math.random() * 1500) });
+      log(`  Tool ${tool}`);
+    }
+    const roll = Math.random();
+    if (roll < 0.15) {
+      await task.requestApproval({ action: "Send 12 external emails", risk: "medium" });
+      log("  ⏸ Approval requested (completing after a short wait for the demo)");
+      await pause(3000, 6000);
+    }
+    await pause(500, 1500);
+    if (roll > 0.92) {
+      await task.fail({ error: "CRM API timed out" });
+      log("✖ Task failed");
+    } else {
+      await task.complete({ result: { itemsProcessed: 10 + Math.floor(Math.random() * 90) } });
+      log("✔ Task completed");
+    }
+    await pause(1500, 5000);
+  }
+} catch (err) {
+  console.error(`\n✖ ${err.message}${err.code ? ` (${err.code})` : ""}`);
+  if (err.status === 401)
+    console.error("  Check the API key — copy it from the agent you connected.");
+  process.exitCode = 1;
+} finally {
+  stopHeartbeat();
+}

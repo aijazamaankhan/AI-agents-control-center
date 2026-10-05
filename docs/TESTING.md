@@ -52,6 +52,17 @@ Phase 3 + website (implemented):
   profile + permissions, live map on the dashboard, department delete guard, Book Demo
   and Velorex enquiry popups.
 
+Phase 4 (implemented):
+
+- Unit: event schemas, task transitions, agent status derivation, canonical JSON,
+  summaries (no prompt leakage), org-timezone day start, live-map mapping, SDK (headers,
+  current task, retries with the same Idempotency-Key, no retry on 4xx).
+- Integration (real route handlers): full lifecycle + exact counters, duplicates and
+  concurrent duplicates, key reuse → 409, auth/validation/ownership errors, rotated keys,
+  cross-agent/tenant isolation, metadata redaction, heartbeat + offline sweep.
+- E2E: events sent with the agent's key appear in the Tasks tab (duplicate not counted),
+  dashboard shows Live + KPIs; landing page must log zero console errors.
+
 Planned (later phases): cost calculation, token aggregation, pricing lookup,
 status transitions, event ingestion idempotency, approval flow, budgets, and the
 full 13-step E2E journey in the master spec.

@@ -165,8 +165,9 @@ const SECTIONS: Section[] = [
     body: (
       <ul className="space-y-1.5">
         <li>
-          <code>npm run dev</code> — start the app · <code>npm run db:migrate</code> — apply
-          database migrations
+          <code>npm run dev</code> — start everything (built-in database included) ·{" "}
+          <code>npm run demo:agent -- --key aos_live_…</code> — a simulated agent that reports live
+          events
         </li>
         <li>
           <code>npm run lint</code> · <code>npm run typecheck</code> · <code>npm run test</code> ·{" "}
