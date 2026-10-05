@@ -66,7 +66,21 @@ deleted. Every change is written to the audit log.
 
 ## Part 2 — Running & developing AgentOS
 
-### Requirements
+### Fastest way to run it: Docker (Windows, macOS, Linux)
+
+Install **Docker Desktop**, then in the project folder:
+
+```powershell
+cd Z:\agentos-platform
+docker compose up --build
+```
+
+Open **http://localhost:3000** → _Start Free_. The first build takes a few minutes. This
+starts PostgreSQL (host port 5433) and the app, applies migrations and generates secrets
+automatically. Stop with `Ctrl+C`; data persists in Docker volumes. Optionally create
+`.env` first to set `EMAIL_PROVIDER_API_KEY` (see `ENV.md`).
+
+### Requirements (without Docker)
 
 - Node.js **22 LTS** or newer
 - PostgreSQL **16**
@@ -80,9 +94,9 @@ git fetch origin
 git checkout claude/cool-thompson-hypiuv    # the development branch
 git pull
 
-Copy-Item .env.example .env                 # then edit DATABASE_URL / TEST_DATABASE_URL
 npm install                                 # also generates the Prisma client
-npm run db:deploy                           # apply migrations
+npm run setup                               # creates .env with secrets + applies migrations
+                                            # (edit DATABASE_URL in .env first if needed)
 npm run dev                                 # http://localhost:3000
 ```
 

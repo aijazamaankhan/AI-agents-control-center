@@ -2,7 +2,7 @@
   "name": "agentos",
   "version": "0.1.0",
   "private": true,
-  "description": "AgentOS — Your AI workforce. One control center.",
+  "description": "AgentOS \u2014 Your AI workforce. One control center.",
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -22,7 +22,9 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "setup": "node scripts/setup.mjs",
+    "docker:up": "docker compose up --build"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

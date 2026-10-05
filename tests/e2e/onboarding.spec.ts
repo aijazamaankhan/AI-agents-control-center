@@ -11,7 +11,7 @@ test("signup → create company → dashboard → settings → sign out → sign
   await expect(
     page.getByRole("heading", { name: "Your AI workforce. One control center." }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Start Free" }).click();
+  await page.getByRole("link", { name: "Start Free" }).first().click();
 
   await expect(page).toHaveURL(/\/signup$/);
   await page.getByLabel("Full name").fill("Aijaz Khan");
@@ -130,4 +130,41 @@ test("health endpoint reports database status", async ({ request }) => {
   expect(body).toMatchObject({ status: "ok", checks: { database: { status: "ok" } } });
   expect(res.headers()["x-content-type-options"]).toBe("nosniff");
   expect(res.headers()["x-powered-by"]).toBeUndefined();
+});
+
+test("landing: Book Demo and Velorex Studio enquiry popups submit", async ({ page }) => {
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: "Everything to run an AI workforce" }),
+  ).toBeVisible();
+
+  // Book Demo
+  await page.getByRole("button", { name: "Book Demo" }).first().click();
+  const demo = page.getByRole("dialog", { name: "Book an AgentOS demo" });
+  await expect(demo).toBeVisible();
+  await demo.getByRole("button", { name: "Request demo" }).click();
+  await expect(demo.getByText("Enter your company")).toBeVisible();
+  await demo.getByLabel("Your name").fill("Sam Lee");
+  await demo.getByLabel("Work email").fill("sam@acme.io");
+  await demo.getByLabel("Company", { exact: true }).fill("Acme");
+  await demo.getByRole("button", { name: "Request demo" }).click();
+  await expect(demo.getByText("Request sent")).toBeVisible();
+  await demo.getByRole("button", { name: "Close" }).first().click();
+  await expect(demo).toBeHidden();
+
+  // Footer: Velorex Studio IT services enquiry
+  await page.getByRole("button", { name: /Velorex Studio — IT Services/ }).click();
+  const inquiry = page.getByRole("dialog", { name: "Work with Velorex Studio" });
+  await expect(inquiry).toBeVisible();
+  await expect(inquiry.getByRole("link", { name: /velorexdesign@gmail.com/ })).toBeVisible();
+  await inquiry.getByLabel("Your name").fill("Priya Sharma");
+  await inquiry.getByLabel("Email").fill("priya@example.com");
+  await inquiry.getByLabel("What do you need?").selectOption("UI / UX design");
+  await inquiry
+    .getByLabel("Project details")
+    .fill("Redesign our booking app with a modern dark theme.");
+  await inquiry.getByRole("button", { name: "Send request" }).click();
+  await expect(inquiry.getByText(/Your request has been received/)).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(inquiry).toBeHidden();
 });

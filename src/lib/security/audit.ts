@@ -14,7 +14,14 @@ export type AuditAction =
   | "organization.updated"
   | "department.created"
   | "department.updated"
-  | "department.deleted";
+  | "department.deleted"
+  | "agent.created"
+  | "agent.updated"
+  | "agent.deleted"
+  | "agent.connection_tested"
+  | "agent.api_key_rotated"
+  | "credential.updated"
+  | "permission.changed";
 
 export interface AuditEntry {
   action: AuditAction;

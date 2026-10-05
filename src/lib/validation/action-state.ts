@@ -7,6 +7,8 @@ export interface ActionState {
   fieldErrors?: Record<string, string[] | undefined>;
   /** Submitted values echoed back so React's post-action form reset doesn't wipe user input. Never secrets. */
   values?: Record<string, string>;
+  /** Extra result data (e.g. a one-time API key to display). */
+  data?: Record<string, string>;
 }
 
 export const initialActionState: ActionState = { ok: false };

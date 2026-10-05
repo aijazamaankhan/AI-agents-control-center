@@ -51,6 +51,7 @@ model Organization {
   sessions    Session[]
   auditLogs   AuditLog[]
   departments Department[]
+  agents      Agent[]
 
   @@map("organizations")
 }
@@ -101,10 +102,162 @@ model Department {
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agents       Agent[]
 
   @@unique([organizationId, nameKey])
   @@index([organizationId, createdAt])
   @@map("departments")
+}
+
+enum AgentStatus {
+  ONLINE
+  WORKING
+  IDLE
+  WAITING
+  FAILED
+  OFFLINE
+  DISCONNECTED
+}
+
+enum ConnectionType {
+  SDK
+  REST_API
+  WEBHOOK
+  MCP
+  API_INTEGRATION
+  CUSTOM
+}
+
+enum EndpointAuthType {
+  NONE
+  API_KEY
+  BEARER_TOKEN
+  BASIC
+}
+
+enum CapabilityRule {
+  ALLOWED
+  DENIED
+  APPROVAL_REQUIRED
+}
+
+/// A connected AI agent. Permanent `agt_` id; every event it reports is tied to its org and department.
+model Agent {
+  id                   String           @id
+  organizationId       String           @map("organization_id")
+  departmentId         String           @map("department_id")
+  name                 String
+  nameKey              String           @map("name_key")
+  description          String           @default("")
+  provider             String
+  model                String
+  connectionType       ConnectionType   @map("connection_type")
+  endpointUrl          String?          @map("endpoint_url")
+  authType             EndpointAuthType @default(NONE) @map("auth_type")
+  authHeaderName       String?          @map("auth_header_name")
+  /// OFFLINE until the agent reports a heartbeat (Phase 4).
+  status               AgentStatus      @default(OFFLINE)
+  lastHeartbeatAt      DateTime?        @map("last_heartbeat_at") @db.Timestamptz(3)
+  lastActiveAt         DateTime?        @map("last_active_at") @db.Timestamptz(3)
+  connectionVerifiedAt DateTime?        @map("connection_verified_at") @db.Timestamptz(3)
+  createdById          String?          @map("created_by_id")
+  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Restrict: a department with agents cannot be deleted.
+  department   Department        @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  credential   AgentCredential?
+  apiKeys      AgentApiKey[]
+  capabilities AgentCapability[]
+
+  @@unique([organizationId, nameKey])
+  @@index([organizationId, departmentId])
+  @@index([organizationId, status])
+  @@map("agents")
+}
+
+/// Endpoint credential, AES-256-GCM encrypted (AAD binds it to org + agent). Never returned to clients.
+model AgentCredential {
+  id             String   @id
+  organizationId String   @map("organization_id")
+  agentId        String   @unique @map("agent_id")
+  ciphertext     String
+  iv             String
+  authTag        String   @map("auth_tag")
+  keyVersion     Int      @default(1) @map("key_version")
+  /// Display-only hint, e.g. "••••a1b2".
+  hint           String
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("agent_credentials")
+}
+
+/// Key the agent uses to report events (Phase 4). Only a SHA-256 hash is stored; shown once.
+model AgentApiKey {
+  id             String    @id
+  organizationId String    @map("organization_id")
+  agentId        String    @map("agent_id")
+  prefix         String
+  keyHash        String    @unique @map("key_hash")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastUsedAt     DateTime? @map("last_used_at") @db.Timestamptz(3)
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz(3)
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, agentId])
+  @@map("agent_api_keys")
+}
+
+/// What an agent may do: allowed, denied, or allowed only after human approval.
+model AgentCapability {
+  id             String         @id
+  organizationId String         @map("organization_id")
+  agentId        String         @map("agent_id")
+  key            String
+  label          String
+  rule           CapabilityRule
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, key])
+  @@index([organizationId])
+  @@map("agent_capabilities")
+}
+
+enum InquiryType {
+  SERVICE
+  DEMO
+}
+
+/// Public website enquiries (Velorex Studio service requests, AgentOS demo requests).
+/// Not tenant-owned. Stored before emailing so no request is lost if delivery fails.
+model Inquiry {
+  id             String      @id
+  type           InquiryType
+  name           String
+  email          String
+  company        String      @default("")
+  phone          String      @default("")
+  service        String      @default("")
+  budget         String      @default("")
+  timeline       String      @default("")
+  teamSize       String      @default("") @map("team_size")
+  message        String      @default("")
+  emailDelivered Boolean     @default(false) @map("email_delivered")
+  emailError     String?     @map("email_error")
+  ipAddress      String?     @map("ip_address")
+  userAgent      String?     @map("user_agent")
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([type, createdAt(sort: Desc)])
+  @@map("inquiries")
 }
 
 // Immutable. organization_id is null only for pre-tenant events (signup/login).

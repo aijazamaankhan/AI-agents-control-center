@@ -15,6 +15,10 @@ export const ID_PREFIXES = {
   execution: "exec",
   event: "evt",
   approval: "apr",
+  inquiry: "inq",
+  credential: "cred",
+  apiKey: "key",
+  capability: "cap",
 } as const;
 
 export type IdKind = keyof typeof ID_PREFIXES;

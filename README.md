@@ -11,12 +11,15 @@ account for every token and dollar.
 
 ## Quick start
 
+**One command (Docker Desktop):** `docker compose up --build` → http://localhost:3000
+
+**Or with Node + PostgreSQL:**
+
 Requirements: Node ≥ 22, PostgreSQL 16.
 
 ```bash
-cp .env.example .env          # set DATABASE_URL / TEST_DATABASE_URL
 npm install                   # also generates the Prisma client
-npm run db:migrate            # apply migrations to DATABASE_URL
+npm run setup                 # .env with generated secrets + migrations
 npm run dev                   # http://localhost:3000
 ```
 
