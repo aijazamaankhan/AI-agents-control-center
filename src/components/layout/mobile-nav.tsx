@@ -52,7 +52,9 @@ export function MobileNav() {
                 <X aria-hidden className="size-5" />
               </Button>
             </div>
-            <SidebarNav onNavigate={() => setOpen(false)} />
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <SidebarNav onNavigate={() => setOpen(false)} />
+            </div>
           </div>
         </div>
       ) : null}

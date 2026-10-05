@@ -1,9 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Barlow_Condensed, Inter } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const display = Barlow_Condensed({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-display-condensed",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: { default: "AgentOS — Your AI workforce. One control center.", template: "%s · AgentOS" },
@@ -12,13 +18,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#070D1A",
+  themeColor: "#050607",
   colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${inter.variable} ${display.variable}`}>
       <body className="min-h-dvh">{children}</body>
     </html>
   );

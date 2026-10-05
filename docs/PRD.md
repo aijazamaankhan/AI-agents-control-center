@@ -97,5 +97,8 @@ master specification and summarized per phase in `UX_FLOWS.md`, `API.md`,
   deferred; the data model leaves room for them (`User.emailVerifiedAt`).
 - **A4** Dark-first: Phase 1 ships the dark theme only; light theme is a later
   enhancement driven by the same tokens.
+- **A6** Before any agent is connected, the dashboard's workforce map shows a sample
+  workforce with simulated activity, always badged "Sample workforce · simulated".
+  KPI cards never use sample data. The landing page uses the same preview.
 - **A5** Onboarding steps 2–5 (departments, connect agent, invite team) land with
   the phases that own those features; the checklist reflects real state.

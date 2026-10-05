@@ -28,7 +28,7 @@ export function AppShell({ user, organizationName, roleLabel, children }: AppShe
             <p className="truncate text-sm font-medium text-foreground">{organizationName}</p>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto px-3 pb-6">
+        <div className="flex-1 overflow-y-auto px-3 pb-4">
           <SidebarNav />
         </div>
       </aside>
@@ -58,13 +58,13 @@ export function AppShell({ user, organizationName, roleLabel, children }: AppShe
             >
               <Bell aria-hidden className="size-[18px]" />
             </button>
-            <a
-              href="mailto:support@agentos.dev"
-              aria-label="Help"
+            <Link
+              href="/help"
+              aria-label="Help & guide"
               className="flex size-9 items-center justify-center rounded-control text-muted hover:bg-raised hover:text-foreground"
             >
               <CircleHelp aria-hidden className="size-[18px]" />
-            </a>
+            </Link>
             <div className="ml-2">
               <UserMenu
                 name={user.name}
@@ -75,7 +75,7 @@ export function AppShell({ user, organizationName, roleLabel, children }: AppShe
             </div>
           </div>
         </header>
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
       </div>
     </div>
   );

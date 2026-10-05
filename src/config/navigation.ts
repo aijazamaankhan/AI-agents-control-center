@@ -4,6 +4,7 @@ import {
   Bot,
   Building2,
   CircleDollarSign,
+  CircleHelp,
   LayoutDashboard,
   ListChecks,
   Plug,
@@ -35,4 +36,8 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Integrations", href: "/integrations", icon: Plug, available: false },
   { label: "Team", href: "/team", icon: Users, available: false },
   { label: "Settings", href: "/settings", icon: Settings, available: true },
+];
+
+export const SECONDARY_NAV: NavItem[] = [
+  { label: "Help & guide", href: "/help", icon: CircleHelp, available: true },
 ];

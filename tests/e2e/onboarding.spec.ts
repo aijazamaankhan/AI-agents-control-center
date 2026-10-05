@@ -39,6 +39,19 @@ test("signup → create company → dashboard → settings → sign out → sign
   await expect(page.getByText("Your AI workforce is empty.")).toBeVisible();
   await expect(page.getByText("Company created")).toBeVisible();
 
+  // Workforce map preview: clearly labelled sample, drill-down and pause control.
+  const map = page.getByRole("region", { name: "Workforce map" });
+  await expect(map.getByText("Sample workforce · simulated")).toBeVisible();
+  await map.getByRole("button", { name: /^Sales:/ }).click();
+  await expect(map.getByRole("heading", { name: "Sales", level: 3 })).toBeVisible();
+  await map.getByRole("button", { name: /^Lead Research Agent,/ }).click();
+  await expect(map.getByText("Execution trace")).toBeVisible();
+  await map.getByRole("button", { name: "Pause live activity" }).click();
+  await expect(map.getByRole("button", { name: "Resume live activity" })).toBeVisible();
+
+  await page.goto("/help");
+  await expect(page.getByRole("heading", { name: "Reading the workforce map" })).toBeVisible();
+
   await page.goto("/settings");
   await expect(page.getByLabel("Company name")).toHaveValue("Acme Corporation");
   await page.getByLabel("Company name").fill("Acme Global");

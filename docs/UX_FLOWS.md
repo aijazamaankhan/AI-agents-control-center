@@ -33,6 +33,14 @@ Top bar: global search (placeholder until Phase 5), notifications, help, profile
 menu (name, email, role, organization, sign out). On mobile the sidebar becomes
 a slide-over drawer.
 
+## Workforce map (UI v2)
+
+Hub → department lanes → agent chips with animated edges. Lanes extend horizontally
+for any number of departments (themed side-scroller, ‹ › buttons); 4 agents per lane
+
+- "N more". Click department → department panel; click agent → execution trace panel;
+  pause button stops motion. Sample data is badged until agents are connected.
+
 ## Dashboard (Phase 1 state)
 
 "Good morning/afternoon/evening, {first name}" + "Your AI workforce is running."

@@ -35,7 +35,7 @@ export default async function OnboardingPage() {
             <span
               className={cn(
                 "flex size-5 items-center justify-center rounded-full border text-[10px] font-semibold",
-                i === 0 ? "border-primary bg-primary text-white" : "border-border",
+                i === 0 ? "border-primary bg-primary text-background" : "border-border",
               )}
             >
               {i + 1}

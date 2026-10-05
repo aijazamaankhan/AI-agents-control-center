@@ -2,10 +2,11 @@ import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 const variants = {
-  primary: "bg-primary text-white hover:bg-primary-hover",
+  primary:
+    "bg-primary text-background font-semibold hover:bg-primary-hover shadow-[0_0_24px_-6px_var(--color-primary)]",
   secondary: "border border-border bg-raised text-foreground hover:bg-border/60",
   ghost: "text-muted hover:bg-raised hover:text-foreground",
-  danger: "bg-error text-white hover:bg-error/90",
+  danger: "bg-error text-background font-semibold hover:bg-error/90",
 } as const;
 
 const sizes = {

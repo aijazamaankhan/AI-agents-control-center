@@ -6,8 +6,8 @@ AgentOS is a multi-tenant control plane and observability platform for a company
 agents: connect existing agents, organize them by department, trace every task, and
 account for every token and dollar.
 
-**Status:** Phase 1 (foundation) — auth, organizations, app shell, design system,
-audit log, health endpoint. See [`docs/PRD.md`](docs/PRD.md) for the phase plan.
+**Status:** Phase 1 (foundation) + UI v2 (live workforce map, "Signal" theme). See
+[`docs/PROGRESS.md`](docs/PROGRESS.md). See [`docs/PRD.md`](docs/PRD.md) for the phase plan.
 
 ## Quick start
 
@@ -35,6 +35,9 @@ If your machine has a preinstalled Chromium that doesn't match Playwright's revi
 set `PLAYWRIGHT_CHROMIUM_EXECUTABLE=/path/to/chromium`.
 
 ## Documentation
+
+Start here: **[User & developer guide](docs/USER_GUIDE.md)** (incl. Windows setup) ·
+**[Progress & roadmap](docs/PROGRESS.md)**.
 
 The `docs/` folder is the source of truth: [PRD](docs/PRD.md) ·
 [Architecture](docs/ARCHITECTURE.md) · [Database](docs/DATABASE.md) ·

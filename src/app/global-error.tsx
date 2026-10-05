@@ -9,7 +9,7 @@ export default function GlobalError({
   return (
     <html lang="en">
       <body
-        style={{ background: "#070D1A", color: "#EEF4FF", fontFamily: "system-ui, sans-serif" }}
+        style={{ background: "#050607", color: "#EEF3F0", fontFamily: "system-ui, sans-serif" }}
       >
         <main
           style={{
@@ -21,16 +21,16 @@ export default function GlobalError({
         >
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 600 }}>Something went wrong.</h1>
-            <p style={{ color: "#8D9BB3", fontSize: 14 }}>Please try again.</p>
+            <p style={{ color: "#8B958F", fontSize: 14 }}>Please try again.</p>
             <button
               onClick={reset}
               style={{
                 marginTop: 16,
                 padding: "8px 16px",
                 borderRadius: 8,
-                border: "1px solid #24324A",
-                background: "#111C2D",
-                color: "#EEF4FF",
+                border: "1px solid #2C3237",
+                background: "#121518",
+                color: "#EEF3F0",
               }}
             >
               Try Again

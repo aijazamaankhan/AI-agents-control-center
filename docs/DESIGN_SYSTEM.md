@@ -1,58 +1,87 @@
-# Design System
+# Design System — v2 "Signal"
 
-Direction: **premium enterprise AI infrastructure** — modern SaaS, financial
-analytics, developer observability. Dark-first. Not a gaming dashboard; gradients
-are used sparingly (logo mark only).
+Direction: **enterprise AI infrastructure with a live-operations feel** — near-black
+surfaces, one signal-green primary, a small set of neon accents used for meaning, big
+condensed numerals, and motion that represents real activity (events flowing), never
+decoration.
 
-## Tokens
+## Research & references
 
-Defined once in `src/app/globals.css` (`@theme`) and consumed via Tailwind
-utilities (`bg-surface`, `text-muted`, `border-border`, …). Never hard-code hex
-values in components.
+- Node-graph editors (n8n-style canvases): dotted canvas, nodes joined by curved edges,
+  labelled ports → the **workforce map**.
+- Folder-tab widgets with oversized condensed numerals → **KPI widgets**.
+- Input → Process → Review → Execute agent pipeline → the **execution trace** stepper and
+  the "How it works" steps.
+- 2026 observability/agent dashboards: dark mode, glow on _active_ paths only,
+  semi-transparent node borders, flowing SVG connections, pulsing working nodes.
+- Accessibility: off-white text (not pure white) on near-black; ≥4.5:1 text contrast;
+  WCAG 2.2.2 requires pause/stop for motion longer than 5 s; honour
+  `prefers-reduced-motion`.
 
-| Token                 | Value     | Use                                 |
-| --------------------- | --------- | ----------------------------------- |
-| `background`          | `#070D1A` | App background                      |
-| `surface`             | `#0D1726` | Cards, sidebar                      |
-| `raised`              | `#111C2D` | Inputs, hover, popovers             |
-| `border`              | `#24324A` | All borders/dividers                |
-| `primary`             | `#4F7CFF` | Primary actions, focus rings, links |
-| `purple`              | `#8B5CF6` | Secondary accent (AI/model)         |
-| `cyan`                | `#35D8C2` | Tertiary accent (tokens/usage)      |
-| `success`             | `#35D08F` | Success, ONLINE/COMPLETED           |
-| `warning`             | `#F5BD4F` | Warnings, WAITING                   |
-| `error`               | `#F05D70` | Errors, FAILED                      |
-| `text` (`foreground`) | `#EEF4FF` | Primary text                        |
-| `muted`               | `#8D9BB3` | Secondary text                      |
+## Tokens (`src/app/globals.css` → Tailwind utilities)
 
-## Shape & spacing
+| Token                      | Value                 | Use                                          |
+| -------------------------- | --------------------- | -------------------------------------------- |
+| `background`               | `#050607`             | App background                               |
+| `surface`                  | `#0B0D0F`             | Cards, sidebar, widgets                      |
+| `raised`                   | `#121518`             | Inputs, chips, hover                         |
+| `elevated`                 | `#181C20`             | Hover on raised                              |
+| `border` / `border-strong` | `#1F2428` / `#2C3237` | Dividers / idle edges, scrollbar thumb       |
+| `primary`                  | `#3CF08A`             | Primary actions, focus, **working**, success |
+| `lime`                     | `#D4FF3F`             | Cost                                         |
+| `cyan`                     | `#38D9F5`             | Tokens / info                                |
+| `purple`                   | `#A78BFA`             | Models / LLM calls                           |
+| `orange`                   | `#FF7A2F`             | Anthropic badge, accent                      |
+| `pink`                     | `#FF4D8D`             | Accent                                       |
+| `warning`                  | `#FFB020`             | **Needs approval** / waiting                 |
+| `error`                    | `#FF4D5E`             | **Failed**                                   |
+| `foreground`               | `#EEF3F0`             | Text                                         |
+| `muted`                    | `#8B958F`             | Secondary text (≈6:1 on surface)             |
 
-- Font: **Inter** (`next/font`), tabular numerals for metrics (`tabular-nums`).
-- Radius: cards **12px** (`rounded-card`), buttons/inputs **8px** (`rounded-control`).
-- Spacing: 4px base (Tailwind default scale).
-- Icons: **Lucide** only, 16px inline / 20px nav.
+Text on `primary` buttons is `background` (dark), not white.
 
-## Components (`src/components/ui`)
+## Type
 
-| Component                                           | Notes                                                                      |
-| --------------------------------------------------- | -------------------------------------------------------------------------- |
-| `Button`                                            | variants `primary`, `secondary`, `ghost`, `danger`; sizes `sm`, `md`, `lg` |
-| `Card` (+ `CardHeader`, `CardTitle`, `CardContent`) | 12px radius surface                                                        |
-| `Input`, `Select`, `Label`, `FormField`             | field errors rendered under input with `aria-describedby`                  |
-| `Badge`                                             | neutral / primary / success / warning / error                              |
-| `StatusIndicator`                                   | **icon + text label + color** — status is never conveyed by color alone    |
-| `EmptyState`                                        | icon, title, description, optional action                                  |
-| `ErrorState`                                        | friendly message + _Try Again_; never raw errors                           |
-| `Skeleton`                                          | loading placeholders; every async route has a `loading.tsx`                |
+- **Inter** for UI text; **Barlow Condensed** (`font-display`) for KPI numerals and stats.
+- `tabular-nums` for every changing number; mono for IDs, timestamps, token counts.
+
+## Shape
+
+- Widgets 22px (`rounded-widget`), cards 16px (`rounded-card`), controls 10px.
+- KPI widgets use the folder-tab notch (tab + concave joint, no border).
+
+## Motion (`@theme` keyframes)
+
+| Utility              | Use                                                                           |
+| -------------------- | ----------------------------------------------------------------------------- |
+| `animate-flow-dash`  | Dashed edge flowing toward the hub when a path is active                      |
+| `animate-pulse-ring` | Halo behind working agents and the hub core                                   |
+| `animate-blink`      | Live dots, current trace step                                                 |
+| `animate-rise`       | New activity-feed items                                                       |
+| SVG `animateMotion`  | Event packets travelling along edges (only while not paused / reduced-motion) |
+
+Rules: only active things move; the pause button stops everything; reduced motion
+disables all animation via the global media query and stops packets.
+
+## Department colours & icons
+
+Departments are user-created and unbounded, so their accent and icon are **derived**
+(`src/features/workforce/visuals.ts`): accent cycles through the six accents by lane
+index (hash of the name when no index), icon is guessed from the name with a building
+fallback.
+
+## Components
+
+`Button`, `Card`, `Input`/`Select`/`FormField`, `Badge`, `StatusIndicator`, `EmptyState`,
+`ErrorState`, `Skeleton`, `FormMessage` (`src/components/ui`); `KpiCard`
+(dashboard); `WorkforceMap`, `MapCanvas`, `DetailPanel`, `ActivityFeed`
+(`src/features/workforce/components`).
 
 ## States
 
-- **Empty** — copy from the spec, e.g. "Your AI workforce is empty." + _Connect Your First Agent_.
-- **Error** — "Unable to load …" + _Try Again_; details go to server logs only.
-- **Loading** — skeletons, never a frozen UI.
+Empty, error ("Unable to load …" + Try Again) and skeleton loading states are required
+for every data view. Sample/preview data is always badged **Sample workforce · simulated**.
 
-## Accessibility
+## Scrollbars
 
-- Visible focus ring (`primary`) on every interactive element.
-- Status uses text + icon + color. Contrast of `muted` on `surface` ≥ 4.5:1.
-- Forms: labels bound to inputs, errors announced via `role="alert"`.
+Thin, themed (`scrollbar-color`), green-tinted on the horizontal map scroller.
