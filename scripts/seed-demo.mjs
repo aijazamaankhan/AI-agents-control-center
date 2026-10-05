@@ -306,9 +306,15 @@ async function ensureCompany(company) {
 
 function saveDemoKey() {
   if (!firstKey) return;
-  // Let `npm run demo:agent` work without arguments (Lead Research Agent's key).
+  // Let `npm run demo:agent` work without arguments (Lead Research Agent's key) — but only when
+  // seeding the database .env points at (tests seed their own database and must not touch .env).
   try {
     let env = readFileSync(".env", "utf8");
+    const envUrl = env
+      .match(/^DATABASE_URL=(.*)$/m)?.[1]
+      ?.trim()
+      .replace(/^["']|["']$/g, "");
+    if (envUrl && envUrl !== process.env.DATABASE_URL) return;
     env = /^AGENTOS_API_KEY=.*$/m.test(env)
       ? env.replace(/^AGENTOS_API_KEY=.*$/m, `AGENTOS_API_KEY=${firstKey}`)
       : `${env.trimEnd()}\n# Demo agent key (Lead Research Agent) — used by \`npm run demo:agent\`\nAGENTOS_API_KEY=${firstKey}\n`;

@@ -6,7 +6,8 @@ AgentOS is a multi-tenant control plane and observability platform for a company
 agents: connect existing agents, organize them by department, trace every task, and
 account for every token and dollar.
 
-**Status:** Phase 1 (foundation) + UI v2 (live workforce map, "Signal" theme) + Phases 2–4 (departments, agents, event ingestion + live dashboard) + Phases 2–4 (departments, agents, event ingestion + live dashboard). See
+**Status:** Phases 1–7 done — foundation, departments, agents, event ingestion, live dashboard
+& tasks, usage & costs (versioned pricing), approvals — plus the Velorex admin panel. See
 [`docs/PROGRESS.md`](docs/PROGRESS.md). See [`docs/PRD.md`](docs/PRD.md) for the phase plan.
 
 ## Quick start (Windows, macOS, Linux)

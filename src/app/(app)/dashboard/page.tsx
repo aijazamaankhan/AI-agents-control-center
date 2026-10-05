@@ -8,6 +8,7 @@ import {
   ListChecks,
   Loader,
   Plus,
+  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 import type { Metadata } from "next";
@@ -27,7 +28,7 @@ export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
   const ctx = await requireOrgContext();
-  const { greeting, checklist, counts, snapshot, today, recentEvents } =
+  const { greeting, checklist, counts, snapshot, today, recentEvents, pendingApprovals } =
     await getDashboardOverview(ctx);
   const firstName = ctx.user.name.split(/\s+/)[0];
   const hasAgents = counts.total > 0;
@@ -58,7 +59,9 @@ export default async function DashboardPage() {
       icon: Clock,
       value: String(counts.WAITING),
       accent: "var(--color-warning)",
-      caption: "Need approval",
+      caption: pendingApprovals
+        ? `${pendingApprovals} approval${pendingApprovals === 1 ? "" : "s"} pending`
+        : "No approvals pending",
     },
     {
       label: "Errors",
@@ -124,6 +127,22 @@ export default async function DashboardPage() {
           ) : null}
         </div>
       </div>
+
+      {pendingApprovals ? (
+        <Link
+          href="/approvals"
+          className="flex items-center justify-between gap-3 rounded-[18px] border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-foreground hover:bg-warning/15"
+        >
+          <span className="flex items-center gap-2">
+            <ShieldCheck aria-hidden className="size-4 text-warning" />
+            {pendingApprovals} agent action{pendingApprovals === 1 ? " is" : "s are"} waiting for
+            approval
+          </span>
+          <span className="inline-flex items-center gap-1 font-medium text-warning">
+            Review <ArrowRight aria-hidden className="size-4" />
+          </span>
+        </Link>
+      ) : null}
 
       <section
         aria-label="Workforce KPIs"

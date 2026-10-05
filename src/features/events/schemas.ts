@@ -77,6 +77,8 @@ export const agentEventSchema = z.discriminatedUnion("event_type", [
     ...base,
     event_type: z.literal("approval.requested"),
     action: z.string().trim().min(1).max(200),
+    /** Optional capability key (e.g. "send_external_email") the agent's permission rules apply to. */
+    capability: z.string().trim().min(1).max(100).optional(),
     reason: z.string().trim().max(1000).optional(),
     risk: z.enum(["low", "medium", "high"]).optional(),
   }),

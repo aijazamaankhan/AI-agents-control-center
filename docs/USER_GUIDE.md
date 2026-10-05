@@ -104,6 +104,18 @@ Costs use Velorex's versioned **price list** (USD per 1M tokens). If a model has
 yet its calls are counted as **unpriced** ($0, with a warning) and are priced automatically
 once a price is added. Changing a price never rewrites past costs.
 
+### 6c. Approvals
+
+When an agent wants to do something risky it asks first. Its **permissions** (Agents → agent
+→ Permissions) decide: **Allowed** → approved instantly, **Denied** → rejected instantly,
+**Requires approval** → it waits in **Approvals** (sidebar badge + dashboard banner).
+Owners, admins and managers open **Approvals**, optionally add a note, and click **Approve**
+or **Reject**. The agent receives the decision and note, its task continues, and the decision
+shows in the task's trace. Requests still pending when a task ends are closed automatically.
+
+Try it: `npm run demo:agent` (about 1 in 4 demo tasks asks to send external emails and waits
+up to 60 s — `--approvals 1 --approval-wait 120` to see it every time).
+
 ### 7. Website enquiries & demo requests
 
 The landing page's **Book Demo** button and the footer's **Velorex Studio — IT Services**

@@ -11,6 +11,7 @@ import { db } from "@/lib/db/client";
 import { activeTaskNames, recentActivity, todayStats } from "@/features/events/server/activity";
 import { toActivityEvent } from "@/features/workforce/live";
 import { usageToday } from "@/features/usage/server/usage-service";
+import { pendingApprovalCount } from "@/features/approvals/server/approval-service";
 import { can } from "@/lib/security/permissions";
 
 export interface ChecklistItem {
@@ -133,13 +134,14 @@ export async function getWorkforceSnapshot(ctx: OrgContext) {
 
 export async function getDashboardOverview(ctx: OrgContext) {
   const organization = await getOrganization(ctx);
-  const [checklist, counts, snapshot, stats, cost, recent] = await Promise.all([
+  const [checklist, counts, snapshot, stats, cost, recent, pendingApprovals] = await Promise.all([
     getOnboardingChecklist(ctx),
     agentStatusCounts(ctx),
     getWorkforceSnapshot(ctx),
     todayStats(ctx, organization.timezone),
     can(ctx.role, "costs:read") ? usageToday(ctx, organization.timezone) : Promise.resolve(null),
     recentActivity(ctx, { limit: 20 }),
+    pendingApprovalCount(ctx),
   ]);
   const today = { ...stats, cost };
   return {
@@ -150,5 +152,6 @@ export async function getDashboardOverview(ctx: OrgContext) {
     today,
     recentEvents: recent.map(toActivityEvent),
     greeting: greetingFor(new Date(), organization.timezone),
+    pendingApprovals,
   };
 }

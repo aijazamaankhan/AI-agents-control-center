@@ -21,6 +21,11 @@ import {
   TERMINAL,
 } from "../transitions";
 import { recordLlmUsage } from "@/features/usage/server/usage-recorder";
+import {
+  cancelPendingApprovals,
+  recordApprovalRequest,
+} from "@/features/approvals/server/approval-service";
+import { matchCapability, policyOutcome } from "@/features/approvals/policy";
 import { assertSameAgent, type AgentContext } from "./agent-auth";
 
 export interface IngestResult {
@@ -28,6 +33,10 @@ export interface IngestResult {
   task_id: string | null;
   execution_id: string | null;
   duplicate: boolean;
+  /** approval.requested only: the approval to poll (GET /api/agent/approvals/:id). */
+  approval_id?: string;
+  /** approval.requested only: "pending", or "approved"/"rejected" when a permission rule decided. */
+  approval_status?: string;
 }
 
 type Tx = Prisma.TransactionClient;
@@ -67,11 +76,18 @@ async function findDuplicate(
   if (existing.payloadHash !== hash || existing.agentId !== ctx.agentId) {
     throw new AppError("CONFLICT", "This Idempotency-Key was already used for a different event.");
   }
+  const approval = await db.approval.findUnique({
+    where: { eventId: existing.id },
+    select: { id: true, status: true },
+  });
   return {
     event_id: existing.id,
     task_id: existing.taskId,
     execution_id: existing.executionId,
     duplicate: true,
+    ...(approval
+      ? { approval_id: approval.id, approval_status: approval.status.toLowerCase() }
+      : {}),
   };
 }
 
@@ -114,6 +130,18 @@ export async function ingestEvent(
       let taskId: string | null = null;
       let executionId: string | null = null;
       let taskName: string | null = null;
+      // approval.requested that the agent's own permission rule decides doesn't pause anything.
+      let autoDecided = false;
+      let taskStatusAfter: TaskStatus | null = null;
+      if (input.event_type === "approval.requested") {
+        const capabilities = await tx.agentCapability.findMany({
+          where: { organizationId: ctx.organizationId, agentId: ctx.agentId },
+          select: { key: true, label: true, rule: true },
+        });
+        autoDecided =
+          policyOutcome(matchCapability(input.action, input.capability, capabilities)) !==
+          "PENDING";
+      }
 
       if (input.event_type === "task.started") {
         taskId = input.task_id ?? newId("task");
@@ -167,8 +195,10 @@ export async function ingestEvent(
           throw new AppError("RESOURCE_NOT_FOUND", "Execution not found for this task.");
         executionId = execution?.id ?? null;
 
-        const next = nextTaskStatus(task.status, type);
-        if (typeof next === "object") throw new AppError("CONFLICT", next.error);
+        const transition = nextTaskStatus(task.status, type);
+        if (typeof transition === "object") throw new AppError("CONFLICT", transition.error);
+        const next = autoDecided ? task.status : transition;
+        taskStatusAfter = next;
 
         const data: Prisma.TaskUpdateInput = {};
         if (next !== task.status) data.status = next;
@@ -186,6 +216,7 @@ export async function ingestEvent(
             data.result = redact(input.result) as Prisma.InputJsonValue;
           }
           if (input.event_type === "task.failed") data.error = input.error ?? "Failed";
+          await cancelPendingApprovals(tx, ctx.organizationId, task.id);
           if (executionId) {
             await tx.execution.update({
               where: { id: executionId },
@@ -252,14 +283,44 @@ export async function ingestEvent(
         });
       }
 
+      let approval: { id: string; status: string } | null = null;
+      if (input.event_type === "approval.requested") {
+        approval = await recordApprovalRequest(tx, {
+          eventId: event.id,
+          organizationId: ctx.organizationId,
+          agentId: ctx.agentId,
+          departmentId: ctx.departmentId,
+          taskId,
+          action: input.action,
+          capability: input.capability,
+          reason: input.reason,
+          risk: input.risk,
+          requestedAt: occurredAt,
+        });
+      }
+
       // Any authenticated event proves the agent is alive.
-      const status: AgentStatus = agentStatusAfter(type, await activeCounts(tx, ctx));
+      // An auto-decided request doesn't pause the agent — unless its task still waits on
+      // another (human) approval.
+      const status: AgentStatus = autoDecided
+        ? taskStatusAfter === "WAITING"
+          ? "WAITING"
+          : "WORKING"
+        : agentStatusAfter(type, await activeCounts(tx, ctx));
       await tx.agent.update({
         where: { id: ctx.agentId },
         data: { status, lastActiveAt: now, lastHeartbeatAt: now },
       });
 
-      return { event_id: event.id, task_id: taskId, execution_id: executionId, duplicate: false };
+      return {
+        event_id: event.id,
+        task_id: taskId,
+        execution_id: executionId,
+        duplicate: false,
+        ...(approval
+          ? { approval_id: approval.id, approval_status: approval.status.toLowerCase() }
+          : {}),
+      };
     });
   } catch (err) {
     // Two concurrent deliveries of the same event: the loser returns the winner's result.

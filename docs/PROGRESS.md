@@ -172,15 +172,31 @@ Update this file at the end of every phase.
   (cost today + 30-day chart) and department pages; `GET /api/v1/usage`.
 - New permission `costs:read` (owner, admin, manager).
 
+### Phase 7 — Approvals
+
+- `approvals` table, created from `approval.requested` events (idempotent with the event);
+  optional `capability` key on the request.
+- **Agent permissions enforced**: `ALLOWED` → approved instantly, `DENIED` → rejected
+  instantly, `APPROVAL_REQUIRED`/unknown → pending; pending pauses the task and agent
+  (Waiting) — auto-decisions don't.
+- **Approvals page** (pending / approved / rejected / all, risk, capability, agent, task,
+  note + Approve / Reject for owners, admins and managers), sidebar badge, dashboard banner,
+  Waiting KPI counts pending approvals.
+- Decisions resume the task and agent, add an `APPROVAL_DECIDED` step to the trace and
+  activity, are audited, and are race-safe (second decision → 409). Undecided requests are
+  cancelled when their task ends.
+- Agent API `GET /api/agent/approvals/:id`; session API `GET /api/v1/approvals`,
+  `POST /api/v1/approvals/:id/approve|reject`. SDK: `capability`, `approval.get()`,
+  `approval.waitForDecision()`, `task.cancel()`; demo agent waits for your decision.
+
 ## 🔜 Next
 
-| Phase | Scope                 | Key deliverables                                                             |
-| ----- | --------------------- | ---------------------------------------------------------------------------- |
-| 2b    | Department follow-ups | Manager ↔ department assignment (managers see only assigned departments)     |
-| 7     | Approvals             | Approval queue, approve/reject (web + mobile), agent permission rules, audit |
-| 8     | Analytics             | Department / agent / model / provider analytics, CSV export                  |
-| 9     | Alerts & budgets      | Budgets with thresholds, failure/token/cost anomalies, notifications         |
-| 10    | Desktop & mobile      | Tauri desktop app (tray, notifications, approval popups), mobile-first PWA   |
+| Phase | Scope                 | Key deliverables                                                           |
+| ----- | --------------------- | -------------------------------------------------------------------------- |
+| 2b    | Department follow-ups | Manager ↔ department assignment (managers see only assigned departments)   |
+| 8     | Analytics             | Department / agent / model / provider analytics, CSV export                |
+| 9     | Alerts & budgets      | Budgets with thresholds, failure/token/cost anomalies, notifications       |
+| 10    | Desktop & mobile      | Tauri desktop app (tray, notifications, approval popups), mobile-first PWA |
 
 ## Known gaps (intentional for now)
 
@@ -188,5 +204,6 @@ Update this file at the end of every phase.
 - No organization switcher (users with several orgs use their first).
 - Rate limiter is in-memory (move to Redis before running several app instances).
 - Managers currently see all departments; per-department assignment is Phase 2b.
-- Notifications are a placeholder until Phase 9 (alerts & budgets).
+- Notifications are a placeholder until Phase 9 (alerts & budgets); approvals have no email/push yet (Phase 9/10).
+- Approval requests don't expire on their own (they close when the task ends).
 - Prices are entered by Velorex admins; there is no automatic sync with provider price pages.

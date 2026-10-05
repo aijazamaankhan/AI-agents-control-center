@@ -22,7 +22,7 @@ after merge).
 - **Secrets**: never stored in plaintext. Agent credentials: AES-256-GCM envelope
   (`ENCRYPTION_KEY`). Session tokens and API keys: stored as SHA-256 hashes.
 
-## Implemented models (Phases 1–6)
+## Implemented models (Phases 1–7)
 
 | Model          | Table           | Purpose                                                                                     |
 | -------------- | --------------- | ------------------------------------------------------------------------------------------- |
@@ -46,9 +46,10 @@ before an org exists); all org-scoped actions set it.
 
 | `Task` | `tasks` | Phase 4: agent, department snapshot, status, timing, token counters (incremented per event), call counts, small `result`, `error` |
 | `Execution` | `executions` | Phase 4: one run of a task |
-| `ExecutionEvent` | `execution_events` | Phase 4: **immutable**; unique `(organization_id, idempotency_key)` + `payload_hash`; type, tokens, latency, tool, short `summary`, redacted `metadata` |
+| `ExecutionEvent` | `execution_events` | Phase 4: **immutable** (Phase 7 adds `APPROVAL_DECIDED`, written when a person decides); unique `(organization_id, idempotency_key)` + `payload_hash`; type, tokens, latency, tool, short `summary`, redacted `metadata` |
 | `ModelPrice` | `model_prices` | Phase 6: platform-wide price list (USD per 1M input/output/cached tokens), `price_key` (normalised `provider/model`), `version` (unique per key), `effective_from`, `note`. Never edited in place — a change adds the next version |
 | `CostRecord` | `cost_records` | Phase 6: one per LLM-call event (unique `event_id`), org-local `day`, tokens, exact `cost_usd` (numeric 24,12), `price_id` + **`pricing_version`** (null = unpriced, cost 0) |
+| `Approval` | `approvals` | Phase 7: one per `approval.requested` event (unique `event_id`); agent, department, task, `action`, `reason`, `risk` (LOW/MEDIUM/HIGH), matched `capability_key`, `status` (PENDING/APPROVED/REJECTED/CANCELLED), `decision_source` (HUMAN/POLICY/SYSTEM), `decided_by_id`, `decision_note`, `requested_at`, `decided_at` |
 | `UsageDaily` | `usage_daily` | Phase 6: aggregates keyed `(organization_id, day, agent_id, department_id, price_key)`: calls, unpriced calls, input/output/cached tokens, cost. Incremented with `INSERT … ON CONFLICT` in the event's transaction |
 
 **Cost rules (Phase 6).** Cost = input × input price + output × output price + cached ×
@@ -64,7 +65,6 @@ Usage rows keep no FK to agents/departments so history survives deletes ("Delete
 | Model                  | Phase | Notes                                                         |
 | ---------------------- | ----- | ------------------------------------------------------------- |
 | `ToolCall`             | 4     | tool name, duration, status (arguments not stored by default) |
-| `Approval`             | 7     | requested action, risk, status, decided_by, decided_at        |
 | `Budget`               | 9     | period, amount, thresholds, channels                          |
 | `Alert`                | 9     | type, severity, status, resource                              |
 | `Integration`          | 9     | type, encrypted config                                        |

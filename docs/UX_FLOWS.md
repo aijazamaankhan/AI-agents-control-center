@@ -111,3 +111,13 @@ status changes. The "Next step" card shows the demo-agent command.
 - `/activity` — live stream with Live/Paused/Connecting indicator; pausing buffers new
   events ("Resume (3 new)").
 - Top bar search submits to `/search?q=` (min 2 characters).
+
+## Approvals (Phase 7)
+
+- `/approvals` — tabs Pending (oldest first) / Approved / Rejected / All. Each card: status,
+  risk, matched capability, action, reason, agent · department, task link, requested time.
+  Deciders get a note field + **Approve** / **Reject**; the card leaves Pending at once.
+  Others see "Waiting for an owner, admin or manager to decide."
+- Sidebar **Approvals** shows a pending-count badge; the dashboard shows a "N agent actions
+  are waiting for approval → Review" banner and the Waiting KPI counts pending approvals.
+- Decisions appear in the task trace and activity feed ("Approved by … : action").

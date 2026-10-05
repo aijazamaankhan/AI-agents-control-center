@@ -46,7 +46,7 @@ export async function requireOrgContext(): Promise<OrgContext> {
   return ctx;
 }
 
-/** Velorex Studio staff only. Everyone else gets a plain 404 — the admin area isn't advertised. */
+/** Velorex Studio staff only. Everyone else is sent to the admin login. */
 export async function requirePlatformAdmin(): Promise<ResolvedSession> {
   const session = await getCurrentSession();
   // Signed out, or signed in with an account that has no admin access: the admin login page

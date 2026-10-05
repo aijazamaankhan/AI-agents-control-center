@@ -24,6 +24,7 @@ const KIND: Record<string, ActivityKind> = {
   LLM_CALL: "llm.call",
   TOOL_CALL: "tool.call",
   APPROVAL_REQUESTED: "approval.requested",
+  APPROVAL_DECIDED: "log",
   LOG: "log",
 };
 
@@ -53,6 +54,8 @@ export function applyActivity(rt: AgentRuntime, a: StreamActivity): AgentRuntime
       return { ...rt, status: "WORKING", stage: "tool", task, tool: a.toolName };
     case "APPROVAL_REQUESTED":
       return { ...rt, status: "WAITING", stage: "review", task };
+    case "APPROVAL_DECIDED":
+      return rt.status === "WAITING" ? { ...rt, status: "WORKING", stage: null } : rt;
     case "TASK_COMPLETED":
       return {
         ...rt,

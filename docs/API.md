@@ -45,18 +45,19 @@ same-origin `Origin` header (CSRF) — otherwise `403 FORBIDDEN`. Writes require
 
 ## Planned
 
-| Method & path                                                          | Phase | Auth          | Notes                                                                   |
-| ---------------------------------------------------------------------- | ----- | ------------- | ----------------------------------------------------------------------- |
-| `GET/POST /api/v1/agents`, `GET/PATCH/DELETE /api/v1/agents/:id`       | 3     | session       |                                                                         |
-| `POST /api/v1/agents/:id/test-connection`                              | 3     | session       |                                                                         |
-| `POST /api/agent-events`                                               | 4     | agent API key | requires `Idempotency-Key`; duplicate → `200` with original `event_id`  |
-| `POST /api/agent/heartbeat`                                            | 4     | agent API key | `agent_id`, `timestamp`, `status`, `current_task_id`                    |
-| `GET /api/v1/activity/stream`                                          | 5     | session       | Server-Sent Events                                                      |
-| `GET /api/v1/tasks`, `GET /api/v1/tasks/:id`                           | 5     | session       | filters: department, agent, status, provider, model, date               |
-| `GET /api/v1/usage` — implemented                                      | 6     | session       | `period=7d\|30d\|90d` (default 30d); `costs:read` (owner/admin/manager) |
-| `GET /api/v1/approvals`, `POST /api/v1/approvals/:id/{approve,reject}` | 7     | session       | audited                                                                 |
-| `GET /api/v1/analytics/*` (+ `?format=csv`)                            | 8     | session       |                                                                         |
-| `GET/POST /api/v1/budgets`, `GET /api/v1/alerts`                       | 9     | session       |                                                                         |
+| Method & path                                                                        | Phase | Auth          | Notes                                                                                          |
+| ------------------------------------------------------------------------------------ | ----- | ------------- | ---------------------------------------------------------------------------------------------- |
+| `GET/POST /api/v1/agents`, `GET/PATCH/DELETE /api/v1/agents/:id`                     | 3     | session       |                                                                                                |
+| `POST /api/v1/agents/:id/test-connection`                                            | 3     | session       |                                                                                                |
+| `POST /api/agent-events`                                                             | 4     | agent API key | requires `Idempotency-Key`; duplicate → `200` with original `event_id`                         |
+| `POST /api/agent/heartbeat`                                                          | 4     | agent API key | `agent_id`, `timestamp`, `status`, `current_task_id`                                           |
+| `GET /api/v1/activity/stream`                                                        | 5     | session       | Server-Sent Events                                                                             |
+| `GET /api/v1/tasks`, `GET /api/v1/tasks/:id`                                         | 5     | session       | filters: department, agent, status, provider, model, date                                      |
+| `GET /api/v1/usage` — implemented                                                    | 6     | session       | `period=7d\|30d\|90d` (default 30d); `costs:read` (owner/admin/manager)                        |
+| `GET /api/v1/approvals`, `POST /api/v1/approvals/:id/{approve,reject}` — implemented | 7     | session       | `?status=pending\|approved\|rejected\|all`; decide = owner/admin/manager, same-origin, audited |
+| `GET /api/agent/approvals/:id` — implemented                                         | 7     | agent API key | the agent polls its own approval                                                               |
+| `GET /api/v1/analytics/*` (+ `?format=csv`)                                          | 8     | session       |                                                                                                |
+| `GET/POST /api/v1/budgets`, `GET /api/v1/alerts`                                     | 9     | session       |                                                                                                |
 
 ### `POST /api/agent-events` — implemented (Phase 4)
 
@@ -69,7 +70,7 @@ agent and department are derived from it, never from the body), `Idempotency-Key
 | `task.started`       | `name`, `description?`, `task_id?` (`task_<8–40 alnum>`, else generated)                          |
 | `llm.call`           | `provider`, `model`, `input_tokens`, `output_tokens`, `cached_tokens?`, `latency_ms?`, `task_id?` |
 | `tool.call`          | `tool_name`, `latency_ms?`, `success?` (default true), `task_id?`                                 |
-| `approval.requested` | `action`, `reason?`, `risk?` (`low`/`medium`/`high`), `task_id?`                                  |
+| `approval.requested` | `action`, `capability?` (capability key), `reason?`, `risk?` (`low`/`medium`/`high`), `task_id?`  |
 | `task.completed`     | `task_id`, `result?` (JSON ≤ 4 KB)                                                                |
 | `task.failed`        | `task_id`, `error?`                                                                               |
 | `task.cancelled`     | `task_id`, `reason?`                                                                              |
@@ -103,6 +104,30 @@ CONFLICT`. Errors: `401` bad/revoked key, `400 IDEMPOTENCY_KEY_REQUIRED`, `422`
 validation (incl. `occurred_at` > 5 min in the future or > 7 days old), `404` task not
 found **for this agent**, `409` finishing an already finished task, `429` rate limit
 (1,200/min per key).
+
+### Approvals (Phase 7) — implemented
+
+`approval.requested` creates an approval. The response adds `approval_id` and
+`approval_status`. The agent's capability rules decide first — the capability is the
+`capability` key if sent, otherwise the `action` text matched against capability keys/labels:
+
+| Rule                           | Result                                             | Task / agent                              |
+| ------------------------------ | -------------------------------------------------- | ----------------------------------------- |
+| `ALLOWED`                      | `approved` immediately (`decision_source: policy`) | keep running                              |
+| `DENIED`                       | `rejected` immediately (`decision_source: policy`) | keep running (agent must stop the action) |
+| `APPROVAL_REQUIRED` / no match | `pending` — shown in **Approvals**                 | task `WAITING`, agent `WAITING`           |
+
+**`GET /api/agent/approvals/:id`** (agent key; only the requesting agent) →
+`{ data: { approval_id, status: "pending"|"approved"|"rejected"|"cancelled", action, task_id,
+decision_source: "human"|"policy"|"system"|null, decision_note, requested_at, decided_at } }`.
+Poll every few seconds (the SDK's `approval.waitForDecision()` does this).
+
+**`POST /api/v1/approvals/:id/approve`** / **`/reject`** (session, same-origin,
+`approvals:decide`) — body `{ "note"?: string ≤ 500 }` → `{ data: { id, status } }`. `409`
+if already decided. A decision resumes the task (`WAITING → RUNNING`) and the agent when
+nothing else is pending, adds an `APPROVAL_DECIDED` event to the task trace/activity, and is
+audited (`approval.approved` / `approval.rejected`). When a task finishes, its undecided
+approvals become `cancelled`. **`GET /api/v1/approvals?status=pending&page=1`** lists them.
 
 ### `POST /api/agent/heartbeat` — implemented
 

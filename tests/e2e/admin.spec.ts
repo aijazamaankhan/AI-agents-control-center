@@ -151,3 +151,73 @@ test("costs & usage: admin adds a price, owners see costs, viewers don't", async
   await page.goto("/costs");
   await expect(page.getByText("Costs are visible to owners, admins and managers")).toBeVisible();
 });
+
+test("approvals: an agent waits, a manager approves, the agent sees the decision", async ({
+  page,
+  request,
+}, testInfo) => {
+  execFileSync("node", ["scripts/seed-demo.mjs", "--quiet"], {
+    env: { ...process.env, NODE_ENV: "development", DATABASE_URL: process.env.TEST_DATABASE_URL },
+  });
+  // Mint an API key for Acme's "Outreach Writer" (its "Send external email" permission
+  // requires approval) straight in the test database.
+  const apiKey = execFileSync(
+    "node",
+    [
+      "--input-type=module",
+      "-e",
+      `import pg from "pg"; import { randomBytes, createHash } from "node:crypto";
+       const c = new pg.Client({ connectionString: process.env.DATABASE_URL }); await c.connect();
+       const { rows } = await c.query("SELECT a.id, a.organization_id FROM agents a JOIN memberships m ON m.organization_id = a.organization_id JOIN users u ON u.id = m.user_id WHERE u.email = 'demo@agentos.dev' AND a.name = 'Outreach Writer' LIMIT 1");
+       const k = "aos_live_" + randomBytes(32).toString("base64url");
+       await c.query("INSERT INTO agent_api_keys (id, organization_id, agent_id, prefix, key_hash) VALUES ($1, $2, $3, $4, $5)", ["key_E2E" + randomBytes(10).toString("hex"), rows[0].organization_id, rows[0].id, k.slice(0, 15), createHash("sha256").update(k).digest("hex")]);
+       await c.end(); process.stdout.write(k);`,
+    ],
+    { env: { ...process.env, DATABASE_URL: process.env.TEST_DATABASE_URL } },
+  ).toString();
+
+  const action = `Send 3 external emails (${testInfo.project.name} ${Date.now()})`;
+  const post = (body: object) =>
+    request.post("/api/agent-events", {
+      headers: { Authorization: `Bearer ${apiKey}`, "Idempotency-Key": crypto.randomUUID() },
+      data: body,
+    });
+  const task = (await (await post({ event_type: "task.started", name: "E2E outreach" })).json())
+    .data;
+  const req = await post({
+    event_type: "approval.requested",
+    task_id: task.task_id,
+    action,
+    capability: "send_external_email",
+    risk: "high",
+  });
+  const { approval_id, approval_status } = (await req.json()).data;
+  expect(approval_status).toBe("pending");
+
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("manager@acme.test");
+  await page.getByLabel("Password").fill("Acme-manager-2026");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole("link", { name: /waiting for\s+approval/ })).toBeVisible();
+
+  await page.goto("/approvals");
+  const card = page.getByRole("listitem").filter({ hasText: action });
+  await card.getByLabel(/Note for/).fill("Only existing customers");
+  await card.getByRole("button", { name: "Approve" }).click();
+  // Decided → it leaves the Pending list.
+  await expect(page.getByRole("listitem").filter({ hasText: action })).toHaveCount(0);
+
+  const poll = await request.get(`/api/agent/approvals/${approval_id}`, {
+    headers: { Authorization: `Bearer ${apiKey}` },
+  });
+  expect((await poll.json()).data).toMatchObject({
+    status: "approved",
+    decision_note: "Only existing customers",
+  });
+
+  await page.goto("/approvals?status=approved");
+  await expect(page.getByRole("listitem").filter({ hasText: action })).toContainText(
+    "Approved by Mohan Manager",
+  );
+});

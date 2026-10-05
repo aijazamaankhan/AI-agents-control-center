@@ -33,9 +33,10 @@ model User {
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  memberships Membership[]
-  sessions    Session[]
-  auditLogs   AuditLog[]
+  memberships      Membership[]
+  sessions         Session[]
+  auditLogs        AuditLog[]
+  approvalsDecided Approval[]   @relation("ApprovalDecider")
 
   @@map("users")
 }
@@ -255,6 +256,7 @@ enum ExecutionEventType {
   LLM_CALL
   TOOL_CALL
   APPROVAL_REQUESTED
+  APPROVAL_DECIDED
   LOG
 }
 
@@ -469,4 +471,56 @@ model UsageDaily {
   @@id([organizationId, day, agentId, departmentId, priceKey])
   @@index([organizationId, day])
   @@map("usage_daily")
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum ApprovalRisk {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+/// Who/what decided: a person, the agent's permission rule, or the system (task ended).
+enum ApprovalDecisionSource {
+  HUMAN
+  POLICY
+  SYSTEM
+}
+
+/// A human-in-the-loop request raised by an agent (`approval.requested`). Decided by a person
+/// (owner/admin/manager), or automatically by the agent's capability rule (ALLOWED / DENIED).
+model Approval {
+  id             String                  @id
+  organizationId String                  @map("organization_id")
+  agentId        String                  @map("agent_id")
+  departmentId   String                  @map("department_id")
+  taskId         String?                 @map("task_id")
+  /// The approval.requested event (one approval per event).
+  eventId        String                  @unique @map("event_id")
+  action         String
+  reason         String                  @default("")
+  risk           ApprovalRisk            @default(MEDIUM)
+  /// Agent capability the action matched (e.g. "send_external_email"), if any.
+  capabilityKey  String?                 @map("capability_key")
+  status         ApprovalStatus          @default(PENDING)
+  decisionSource ApprovalDecisionSource? @map("decision_source")
+  decidedById    String?                 @map("decided_by_id")
+  decisionNote   String                  @default("") @map("decision_note")
+  requestedAt    DateTime                @map("requested_at") @db.Timestamptz(3)
+  decidedAt      DateTime?               @map("decided_at") @db.Timestamptz(3)
+  createdAt      DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  decidedBy User? @relation("ApprovalDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, status, requestedAt(sort: Desc)])
+  @@index([organizationId, agentId, status])
+  @@index([taskId])
+  @@map("approvals")
 }

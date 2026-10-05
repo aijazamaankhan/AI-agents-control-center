@@ -125,6 +125,21 @@ master specification and summarized per phase in `UX_FLOWS.md`, `API.md`,
       reactivate, sign out everywhere, temporary password reset, revoke agent keys.
 - [x] Admin access only via CLI; secrets never viewable; all admin actions audited.
 
+## 6f. Phase 6 acceptance — usage & costs
+
+- [x] Versioned price list (admin-managed); every LLM call costed with its `pricing_version`.
+- [x] Unpriced models visible, counted $0, priced automatically when a price is added;
+      priced history never changes.
+- [x] Daily aggregates feed the Costs & Usage page, dashboard, agent and department cost.
+
+## 6g. Phase 7 acceptance — approvals
+
+- [x] Agents request approval; capability rules auto-approve (Allowed) / auto-reject (Denied).
+- [x] Pending requests pause task and agent; owners/admins/managers approve or reject with a note.
+- [x] Agents poll the decision (API + SDK `waitForDecision`); decisions in trace, activity, audit.
+- [x] Separate login pages for companies (`/login`) and Velorex admins (`/admin/login`);
+      demo logins for every role (docs/LOGINS.md).
+
 ## 7. Assumptions (documented per "do not guess" rule)
 
 - **A1** _Book Demo_ links to a `mailto:` placeholder until a sales flow exists.

@@ -174,3 +174,14 @@ Retention settings and export/deletion endpoints arrive with Phase 9.
 `NODE_ENV=production`, the sign-in pages only list demo logins when `NODE_ENV !== "production"`
 and the accounts exist, and production deployments (Docker, `next start`) never run the seed.
 Never point a development checkout at a production database.
+
+## 6f. Approvals
+
+- Only owners, admins and managers (`approvals:decide`) can approve or reject; everyone in the
+  organization can see the queue. Decisions are tenant-scoped (another org's approval id is a
+  `404`), race-safe (only a `PENDING` row can be decided; a second decision gets `409`), and
+  audited with the decider and optional note.
+- Agents can only read their own approvals (`GET /api/agent/approvals/:id` checks org + agent).
+- Automatic decisions come only from the agent's own capability rules, set by owners/admins.
+  Approval is advisory: AgentOS can't stop an agent that ignores a rejection, so critical
+  actions must also be guarded in the agent's own code.

@@ -4,17 +4,18 @@ import type { ReactNode } from "react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { MobileNav } from "./mobile-nav";
-import { SidebarNav } from "./sidebar-nav";
+import { SidebarNav, type NavBadges } from "./sidebar-nav";
 import { UserMenu } from "./user-menu";
 
 interface AppShellProps {
   user: { name: string; email: string; isPlatformAdmin?: boolean };
   organizationName: string;
   roleLabel: string;
+  badges?: NavBadges;
   children: ReactNode;
 }
 
-export function AppShell({ user, organizationName, roleLabel, children }: AppShellProps) {
+export function AppShell({ user, organizationName, roleLabel, badges, children }: AppShellProps) {
   return (
     <div className="flex min-h-dvh">
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border bg-surface lg:flex">
@@ -30,7 +31,7 @@ export function AppShell({ user, organizationName, roleLabel, children }: AppShe
           </div>
         </div>
         <div className="flex-1 overflow-y-auto px-3 pb-4">
-          <SidebarNav />
+          <SidebarNav badges={badges} />
         </div>
         <p className="px-5 pb-3 font-mono text-[10px] text-muted/70" title="Running version">
           {process.env.NEXT_PUBLIC_APP_VERSION}
@@ -39,7 +40,7 @@ export function AppShell({ user, organizationName, roleLabel, children }: AppShe
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur sm:px-6">
-          <MobileNav />
+          <MobileNav badges={badges} />
           <form action="/search" role="search" className="relative max-w-md flex-1">
             <Search
               aria-hidden

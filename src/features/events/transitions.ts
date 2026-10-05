@@ -108,6 +108,8 @@ export function summarize(e: {
       return `Called ${e.toolName}${e.success === false ? " (failed)" : ""}`;
     case "APPROVAL_REQUESTED":
       return `Approval requested: ${e.action ?? ""}`;
+    case "APPROVAL_DECIDED":
+      return e.message ?? "Approval decided";
     case "LOG":
       return e.message ?? "";
   }

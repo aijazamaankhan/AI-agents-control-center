@@ -125,11 +125,15 @@ const SECTIONS: Section[] = [
     id: "approvals",
     icon: ShieldCheck,
     title: "Approvals",
-    status: "soon",
+    status: "available",
     body: (
       <p>
-        Risky actions — sending external email, refunds, payments, publishing — wait for a human to
-        approve or reject, from the web, desktop or mobile app. Every decision is audited.
+        When an agent asks before a risky action (sending external email, refunds, payments,
+        publishing), its permission rule decides: <strong>Allowed</strong> and{" "}
+        <strong>Denied</strong> are answered instantly; <strong>Requires approval</strong> waits in{" "}
+        <strong>Approvals</strong> for an owner, admin or manager. The agent and its task pause
+        until you approve or reject (with an optional note the agent receives). Every decision is
+        audited and shown in the task trace.
       </p>
     ),
   },

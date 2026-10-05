@@ -5,10 +5,19 @@ import { usePathname } from "next/navigation";
 import { NAV_ITEMS, SECONDARY_NAV, type NavItem } from "@/config/navigation";
 import { cn } from "@/lib/utils";
 
-export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+/** Counts shown next to nav items, keyed by href (e.g. pending approvals). */
+export type NavBadges = Record<string, number>;
+
+export function SidebarNav({
+  onNavigate,
+  badges = {},
+}: {
+  onNavigate?: () => void;
+  badges?: NavBadges;
+}) {
   return (
     <div className="flex h-full flex-col">
-      <NavList items={NAV_ITEMS} label="Main" onNavigate={onNavigate} />
+      <NavList items={NAV_ITEMS} label="Main" onNavigate={onNavigate} badges={badges} />
       <div className="mt-auto border-t border-border pt-3">
         <NavList items={SECONDARY_NAV} label="Support" onNavigate={onNavigate} />
       </div>
@@ -20,10 +29,12 @@ function NavList({
   items,
   label,
   onNavigate,
+  badges = {},
 }: {
   items: NavItem[];
   label: string;
   onNavigate?: () => void;
+  badges?: NavBadges;
 }) {
   const pathname = usePathname();
 
@@ -36,6 +47,14 @@ function NavList({
           <>
             <Icon aria-hidden className="size-[18px] shrink-0" />
             <span className="flex-1 truncate">{item.label}</span>
+            {badges[item.href] ? (
+              <span
+                className="rounded-full bg-warning px-1.5 text-[11px] font-semibold text-background"
+                aria-label={`${badges[item.href]} pending`}
+              >
+                {badges[item.href]}
+              </span>
+            ) : null}
             {!item.available ? (
               <span className="rounded-full border border-border px-1.5 text-[10px] font-medium tracking-wide text-muted uppercase">
                 Soon

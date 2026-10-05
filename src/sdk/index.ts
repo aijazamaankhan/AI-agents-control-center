@@ -5,6 +5,8 @@
  *   const task = await agentos.task.start({ name: "Find SaaS leads" });
  *   await agentos.llm.call({ provider: "anthropic", model: "claude-sonnet", inputTokens: 12430, outputTokens: 2840 });
  *   await agentos.tool.call({ name: "web_search" });
+ *   const approval = await agentos.approval.request({ action: "Send 12 emails", capability: "send_external_email" });
+ *   const decision = await agentos.approval.waitForDecision(approval.approval_id!); // "approved" | "rejected" | …
  *   await agentos.task.complete({ result: { leadsFound: 47 } });
  *
  * Zero dependencies; uses only `fetch` and `crypto.randomUUID` (Node ≥ 18, Deno, Bun, browsers).
@@ -29,6 +31,23 @@ export interface EventResult {
   task_id: string | null;
   execution_id: string | null;
   duplicate: boolean;
+  /** approval.requested only. */
+  approval_id?: string;
+  /** approval.requested only: "pending", or "approved"/"rejected" when the agent's permissions decided. */
+  approval_status?: ApprovalStatus;
+}
+
+export type ApprovalStatus = "pending" | "approved" | "rejected" | "cancelled";
+
+export interface ApprovalDecision {
+  approval_id: string;
+  status: ApprovalStatus;
+  action: string;
+  task_id: string | null;
+  decision_source: "human" | "policy" | "system" | null;
+  decision_note: string | null;
+  requested_at: string;
+  decided_at: string | null;
 }
 
 export interface LlmCallInput {
@@ -52,6 +71,8 @@ export interface ToolCallInput {
 
 export interface ApprovalInput {
   action: string;
+  /** Capability key (e.g. "send_external_email"): Allowed/Denied rules decide instantly. */
+  capability?: string;
   reason?: string;
   risk?: "low" | "medium" | "high";
   taskId?: string;
@@ -97,6 +118,9 @@ export class TaskHandle {
   fail(input: { error?: string } = {}) {
     return this.#client.task.fail({ ...input, taskId: this.id });
   }
+  cancel(input: { reason?: string } = {}) {
+    return this.#client.task.cancel({ ...input, taskId: this.id });
+  }
 }
 
 export class AgentOS {
@@ -116,7 +140,19 @@ export class AgentOS {
   };
   readonly llm: { call: (input: LlmCallInput) => Promise<EventResult> };
   readonly tool: { call: (input: ToolCallInput) => Promise<EventResult> };
-  readonly approval: { request: (input: ApprovalInput) => Promise<EventResult> };
+  readonly approval: {
+    request: (input: ApprovalInput) => Promise<EventResult>;
+    /** Current state of an approval this agent requested. */
+    get: (approvalId: string) => Promise<ApprovalDecision>;
+    /**
+     * Polls until a person (or a rule) decides, or `timeoutMs` passes (then status stays
+     * "pending"). Defaults: poll every 3 s for up to 10 minutes.
+     */
+    waitForDecision: (
+      approvalId: string,
+      options?: { timeoutMs?: number; intervalMs?: number },
+    ) => Promise<ApprovalDecision>;
+  };
   readonly agent: {
     heartbeat: (status?: AgentStatus, currentTaskId?: string) => Promise<unknown>;
     /** Sends a heartbeat now and every `intervalMs`; returns a stop function. */
@@ -205,9 +241,23 @@ export class AgentOS {
           event_type: "approval.requested",
           task_id: i.taskId ?? this.#current?.id,
           action: i.action,
+          capability: i.capability,
           reason: i.reason,
           risk: i.risk,
         }),
+      get: async (approvalId) =>
+        (await this.#request(
+          "GET",
+          `/api/agent/approvals/${encodeURIComponent(approvalId)}`,
+        )) as ApprovalDecision,
+      waitForDecision: async (approvalId, { timeoutMs = 600_000, intervalMs = 3_000 } = {}) => {
+        const deadline = Date.now() + timeoutMs;
+        for (;;) {
+          const decision = await this.approval.get(approvalId);
+          if (decision.status !== "pending" || Date.now() >= deadline) return decision;
+          await sleep(Math.min(intervalMs, Math.max(0, deadline - Date.now())));
+        }
+      },
     };
 
     this.agent = {
@@ -240,18 +290,27 @@ export class AgentOS {
     return (await this.#post("/api/agent-events", body, idempotencyKey)) as EventResult;
   }
 
-  async #post(path: string, body: unknown, idempotencyKey?: string): Promise<unknown> {
+  #post(path: string, body: unknown, idempotencyKey?: string): Promise<unknown> {
+    return this.#request("POST", path, body, idempotencyKey);
+  }
+
+  async #request(
+    method: "GET" | "POST",
+    path: string,
+    body?: unknown,
+    idempotencyKey?: string,
+  ): Promise<unknown> {
     let attempt = 0;
     for (;;) {
       try {
         const res = await this.#fetch(`${this.baseUrl}${path}`, {
-          method: "POST",
+          method,
           headers: {
             Authorization: `Bearer ${this.#apiKey}`,
-            "Content-Type": "application/json",
+            ...(body === undefined ? {} : { "Content-Type": "application/json" }),
             ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
           },
-          body: JSON.stringify(body),
+          body: body === undefined ? undefined : JSON.stringify(body),
         });
         const json = (await res.json().catch(() => ({}))) as {
           data?: unknown;

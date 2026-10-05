@@ -20,6 +20,8 @@ export type AuditAction =
   | "agent.deleted"
   | "agent.connection_tested"
   | "agent.api_key_rotated"
+  | "approval.approved"
+  | "approval.rejected"
   | "credential.updated"
   | "permission.changed"
   | "user.profile_updated"

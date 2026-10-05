@@ -9,6 +9,7 @@ const TYPE_LABEL: Record<string, { label: string; color: string }> = {
   LLM_CALL: { label: "LLM call", color: "var(--color-purple)" },
   TOOL_CALL: { label: "Tool call", color: "var(--color-lime)" },
   APPROVAL_REQUESTED: { label: "Approval", color: "var(--color-warning)" },
+  APPROVAL_DECIDED: { label: "Decision", color: "var(--color-orange)" },
   LOG: { label: "Log", color: "var(--color-muted)" },
 };
 

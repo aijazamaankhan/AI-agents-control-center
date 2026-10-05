@@ -4,9 +4,9 @@ import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
-import { SidebarNav } from "./sidebar-nav";
+import { SidebarNav, type NavBadges } from "./sidebar-nav";
 
-export function MobileNav() {
+export function MobileNav({ badges }: { badges?: NavBadges }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export function MobileNav() {
               </Button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto">
-              <SidebarNav onNavigate={() => setOpen(false)} />
+              <SidebarNav onNavigate={() => setOpen(false)} badges={badges} />
             </div>
           </div>
         </div>

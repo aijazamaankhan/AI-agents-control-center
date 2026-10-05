@@ -61,8 +61,8 @@ server-side when an agent requests an action (Phase 7).
   Put it in the agent's environment as `AGENTOS_API_KEY` with `AGENTOS_AGENT_ID`.
 - Endpoint credentials (API key header, bearer token, basic auth) are encrypted at rest
   and only used server-side (e.g. Test connection).
-- Capabilities carry a rule: `ALLOWED`, `APPROVAL_REQUIRED`, `DENIED`. Enforcement on
-  agent action requests and the approval queue arrive in Phase 7.
+- Capabilities carry a rule: `ALLOWED`, `APPROVAL_REQUIRED`, `DENIED`, enforced on approval
+  requests since Phase 7 (see below).
 - Status is `OFFLINE` until the agent reports (Phase 4 heartbeat/events).
 
 ## Implemented in Phase 4
@@ -74,3 +74,17 @@ server-side when an agent requests an action (Phase 7).
 - Status lifecycle: event/heartbeat → `ONLINE`/`WORKING`/`WAITING`/`FAILED`; 2 minutes of
   silence → `OFFLINE`.
 - Try it: `npm run demo:agent -- --key aos_live_…`.
+
+## Implemented in Phase 7 — approvals
+
+- Before a risky action the agent calls `task.requestApproval({ action, capability?, reason?, risk? })`.
+  The agent's capability rule answers instantly when it can (`ALLOWED` → approved,
+  `DENIED` → rejected); otherwise the request waits in **Approvals** and the task and agent
+  show **Waiting**.
+- The agent then waits: `const d = await agentos.approval.waitForDecision(res.approval_id)`
+  (polls `GET /api/agent/approvals/:id`; default every 3 s for up to 10 min). On
+  `approved` continue; on `rejected` (note in `d.decision_note`) skip the action or cancel the
+  task; still `pending` after the timeout → your choice (the demo agent cancels the task, which
+  closes the request).
+- AgentOS records but cannot _force_ the agent's behaviour — an agent must honour the decision.
+  Use your own code path checks for anything critical (e.g. payments).
