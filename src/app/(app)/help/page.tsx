@@ -97,7 +97,7 @@ const SECTIONS: Section[] = [
     id: "agents",
     icon: Bot,
     title: "Agents & tasks",
-    status: "soon",
+    status: "available",
     body: (
       <p>
         Connect agents via SDK, REST API, webhook or MCP. Every agent gets a permanent ID (

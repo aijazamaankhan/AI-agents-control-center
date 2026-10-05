@@ -50,7 +50,31 @@ Names must be unique within your organization (case-insensitive). Delete asks fo
 confirmation. Once agents exist (Phase 3), a department that still has agents can't be
 deleted. Every change is written to the audit log.
 
-### 5. Settings & roles
+### 5. Agents
+
+1. **Agents → Connect Agent** (owners/admins; needs at least one department).
+2. Fill in name, department, provider and model.
+3. Choose how it connects: **SDK** (agent reports events with its API key), or REST API,
+   Webhook, MCP, API integration or Custom with an endpoint URL and optional
+   authentication (API key header, bearer token or basic auth — encrypted at rest).
+4. **Test connection** checks the endpoint is reachable (local/private addresses are
+   blocked for safety; set `ALLOW_PRIVATE_AGENT_ENDPOINTS=true` in `.env` to test agents
+   on your own machine).
+5. Add capabilities and mark each **Allowed**, **Needs approval** or **Not allowed**.
+6. **Connect Agent** → copy the API key now (it's shown once) into your agent's
+   environment. The agent appears as **Offline** until it starts reporting.
+
+On an agent's page: **Permissions** to change rules, **Settings** to edit the connection,
+rotate the API key or delete the agent.
+
+### 6. Website enquiries & demo requests
+
+The landing page's **Book Demo** button and the footer's **Velorex Studio — IT Services**
+link open forms. Submissions are emailed to velorexdesign@gmail.com once
+`EMAIL_PROVIDER_API_KEY` is set (see `ENV.md` → "Sending enquiry emails") and are always
+saved in the database (`npx prisma studio` → `Inquiry`).
+
+### 7. Settings & roles
 
 **Settings** holds your organization profile (owners and admins can edit).
 

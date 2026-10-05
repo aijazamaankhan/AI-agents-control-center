@@ -94,6 +94,57 @@ test("signup → create company → dashboard → settings → sign out → sign
     error: { code: "FORBIDDEN", message: "Cross-site request blocked." },
   });
 
+  // Phase 3: connect an agent.
+  await page.goto("/agents");
+  await expect(page.getByText("Your AI workforce is empty.")).toBeVisible();
+  await page.getByRole("link", { name: "Connect Your First Agent" }).click();
+  await expect(page).toHaveURL(/\/agents\/new$/);
+  await page.getByLabel("Agent name").fill("Lead Research Agent");
+  await page.getByLabel("Department").selectOption({ label: "Sales" });
+  await page.getByLabel("Model", { exact: true }).fill("Claude Sonnet");
+  await page.getByRole("button", { name: "Web research" }).click();
+  await page.getByRole("button", { name: "Send external email" }).click();
+  // SDK agents have no endpoint: "Test connection" explains how they connect.
+  await page.getByRole("button", { name: "Test connection" }).click();
+  await expect(page.getByText(/connects by sending events with its AgentOS API key/)).toBeVisible();
+  // A webhook pointing at a private address is refused (SSRF protection), and typed values survive.
+  await page.locator("label", { hasText: "Webhook" }).click();
+  await page.getByLabel("Agent endpoint").fill("http://169.254.169.254/latest");
+  await page.getByRole("button", { name: "Test connection" }).click();
+  await expect(page.getByText(/private or local network address/)).toBeVisible();
+  await expect(page.getByLabel("Agent name")).toHaveValue("Lead Research Agent");
+  await page.locator("label", { hasText: "SDK" }).first().click();
+  await page.getByRole("button", { name: "Connect Agent" }).click();
+  await expect(page.getByRole("heading", { name: /Lead Research Agent connected/ })).toBeVisible();
+  await expect(page.getByTestId("api-key")).toHaveText(/^aos_live_/);
+  await page.getByRole("link", { name: "Open agent" }).click();
+
+  await expect(page.getByRole("heading", { name: "Lead Research Agent", level: 1 })).toBeVisible();
+  await expect(page.getByText("Offline").first()).toBeVisible();
+  await page.getByRole("link", { name: "Permissions" }).click();
+  await expect(page.getByText("Approval required")).toBeVisible();
+  await expect(page.getByText("Send external email").first()).toBeVisible();
+
+  await page.goto("/dashboard");
+  const liveMap = page.getByRole("region", { name: "Workforce map" });
+  await expect(liveMap.getByText("Sample workforce · simulated")).toHaveCount(0);
+  await expect(
+    liveMap.getByRole("button", { name: /^Lead Research Agent, Offline/ }),
+  ).toBeVisible();
+
+  // A department with agents can't be deleted.
+  await page.goto("/departments");
+  await page
+    .getByRole("list", { name: "Departments" })
+    .getByRole("link", { name: /Sales/ })
+    .click();
+  await expect(page.getByRole("list", { name: "Agents in Sales" })).toContainText(
+    "Lead Research Agent",
+  );
+  await page.getByRole("button", { name: "Delete department" }).click();
+  await page.getByRole("button", { name: "Delete department" }).click();
+  await expect(page.getByText(/still has 1 agent/)).toBeVisible();
+
   await page.goto("/help");
   await expect(page.getByRole("heading", { name: "Reading the workforce map" })).toBeVisible();
 

@@ -77,6 +77,27 @@ convenience but is never the enforcement point.
   (`WEBHOOK_SIGNING_SECRET`), timestamped, 5-minute tolerance.
 - Agent credentials encrypted at rest with AES-256-GCM (`ENCRYPTION_KEY`, key versioned).
 
+## 6b. Implemented in Phase 3
+
+- **Credentials**: `src/lib/security/crypto.ts` — AES-256-GCM with a random 96-bit IV
+  per write; associated data binds each ciphertext to its organization and agent, so a
+  row copied elsewhere fails to decrypt. Key from `ENCRYPTION_KEY` (32 bytes, base64);
+  missing/invalid key → `SERVICE_UNAVAILABLE` naming the fix, never the value. The UI
+  and audit log only ever see a `••••last4` hint; secrets are never echoed back to forms.
+- **Agent API keys**: `aos_live_` + 256 random bits, stored as SHA-256 only, shown once,
+  rotation revokes the previous key immediately.
+- **Test connection (SSRF)**: `src/lib/security/outbound.ts` resolves the host and
+  rejects loopback, RFC1918, CGNAT, link-local (incl. cloud metadata `169.254.169.254`),
+  multicast, reserved, unique-local/link-local IPv6 and IPv4-mapped forms; URLs with
+  embedded credentials or non-http(s) schemes are refused; `redirect: "manual"`, 5 s
+  timeout, 20 tests / 10 min per user. A DNS-rebinding window between lookup and
+  connect remains (documented; acceptable for a reachability probe that returns only a
+  status code). `ALLOW_PRIVATE_AGENT_ENDPOINTS=true` disables the IP check for local dev.
+- **RBAC**: `agents:manage` (OWNER/ADMIN) for create/edit/permissions/keys/delete/test;
+  all members can read. Department ids are validated against the caller's org.
+- **Public forms** (`inquiries`): honeypot field, 5 requests/hour/IP, HTML-escaped emails,
+  reply-to set to the customer, stored before sending so nothing is lost.
+
 ## 7. HTTP security headers
 
 Set in `next.config.ts` for all routes: `Content-Security-Policy` (production),
@@ -95,7 +116,9 @@ Set in `next.config.ts` for all routes: `Content-Security-Policy` (production),
 `recordAudit()` writes immutable `audit_logs` rows. Phase 1 actions:
 `user.signup`, `user.login`, `user.login_failed`, `user.logout`,
 `organization.created`, `organization.updated`; Phase 2: `department.created`,
-`department.updated` (changed fields, old/new name), `department.deleted`. Metadata never contains
+`department.updated` (changed fields, old/new name), `department.deleted`; Phase 3:
+`agent.created`, `agent.updated`, `agent.deleted`, `agent.connection_tested`,
+`agent.api_key_rotated`, `credential.updated`, `permission.changed` (added/removed/changed). Metadata never contains
 secrets or passwords.
 
 ## 10. Privacy

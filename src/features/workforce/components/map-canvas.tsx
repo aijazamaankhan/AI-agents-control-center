@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Hand, LoaderCircle, Moon, Plus, Radio } from "lucide-react";
+import { AlertTriangle, CircleOff, Hand, LoaderCircle, Moon, Plus, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DepartmentIcon } from "./department-icon";
 import { formatCost, formatTokens } from "../format";
@@ -24,6 +24,7 @@ function agentLine(agent: WorkforceAgent, rt: AgentRuntime): string {
   if (rt.status === "WAITING") return "Needs approval";
   if (rt.status === "FAILED") return "Failed · will retry";
   if (rt.status === "IDLE") return "Idle";
+  if (rt.status === "OFFLINE") return "Offline · awaiting heartbeat";
   if (rt.stage === "tool" && rt.tool) return `Using ${rt.tool}`;
   if (rt.stage === "done") return "Wrapping up";
   return `Thinking · ${agent.model}`;
@@ -34,6 +35,7 @@ const STATUS_ICON = {
   WAITING: Hand,
   IDLE: Moon,
   FAILED: AlertTriangle,
+  OFFLINE: CircleOff,
 } as const;
 
 export function MapCanvas({
@@ -337,6 +339,20 @@ export function MapCanvas({
                 </button>
               );
             })}
+
+            {dep.agents.length === 0 ? (
+              <div
+                className="absolute flex items-center justify-center rounded-[12px] border border-dashed border-border-strong px-3 text-center text-[11px] text-muted"
+                style={{
+                  left: lane.x + 26,
+                  top: LAYOUT.agentTop,
+                  width: cardWidth - 26,
+                  height: agentHeight,
+                }}
+              >
+                No agents yet
+              </div>
+            ) : null}
 
             {lane.overflow > 0 && lane.overflowY !== null ? (
               <button

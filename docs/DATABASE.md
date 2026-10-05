@@ -22,7 +22,7 @@ after merge).
 - **Secrets**: never stored in plaintext. Agent credentials: AES-256-GCM envelope
   (`ENCRYPTION_KEY`). Session tokens and API keys: stored as SHA-256 hashes.
 
-## Implemented models (Phases 1–2)
+## Implemented models (Phases 1–3)
 
 | Model          | Table           | Purpose                                                                                     |
 | -------------- | --------------- | ------------------------------------------------------------------------------------------- |
@@ -38,13 +38,16 @@ after merge).
 `AuditLog.organization_id` is nullable only for pre-tenant events (signup, login
 before an org exists); all org-scoped actions set it.
 
+| `Agent` | `agents` | Phase 3: department (restrict delete), provider/model, connection type, endpoint, auth type, status (default `OFFLINE`), heartbeat/verification timestamps; unique `(organization_id, name_key)` |
+| `AgentCredential` | `agent_credentials` | Phase 3: AES-256-GCM `ciphertext`/`iv`/`auth_tag`, `key_version`, display `hint`; AAD = `agent-credential:{org}:{agent}` |
+| `AgentApiKey` | `agent_api_keys` | Phase 3: `prefix`, `key_hash` (SHA-256, unique), `revoked_at`, `last_used_at` |
+| `AgentCapability` | `agent_capabilities` | Phase 3: `key`, `label`, `rule` (`ALLOWED`/`DENIED`/`APPROVAL_REQUIRED`); unique `(agent_id, key)` |
+| `Inquiry` | `inquiries` | Public (non-tenant) website enquiries & demo requests; stored before emailing, with delivery status |
+
 ## Planned models (later phases — design fixed, not yet migrated)
 
 | Model                  | Phase | Notes                                                                             |
 | ---------------------- | ----- | --------------------------------------------------------------------------------- |
-| `Agent`                | 3     | `agt_` id, department, provider, model, connection type, status, last heartbeat   |
-| `AgentCredential`      | 3     | encrypted secret, key version, last 4 chars for display                           |
-| `AgentCapability`      | 3     | capability key, allowed / denied / approval-required                              |
 | `Task`                 | 4     | status `QUEUED                                                                    | RUNNING | WAITING | COMPLETED | FAILED | CANCELLED` |
 | `Execution`            | 4     | one run of a task                                                                 |
 | `ExecutionEvent`       | 4     | immutable; unique `(organization_id, idempotency_key)`                            |

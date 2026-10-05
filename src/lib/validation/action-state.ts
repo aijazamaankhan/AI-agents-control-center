@@ -22,7 +22,7 @@ export function fieldErrorsFrom(error: z.ZodError): ActionState["fieldErrors"] {
   return out;
 }
 
-const SECRET_FIELDS = new Set(["password", "currentPassword", "newPassword"]);
+const SECRET_FIELDS = new Set(["password", "currentPassword", "newPassword", "authSecret"]);
 
 export function echoValues(raw: Record<string, string>): Record<string, string> {
   return Object.fromEntries(Object.entries(raw).filter(([k]) => !SECRET_FIELDS.has(k)));

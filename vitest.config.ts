@@ -22,7 +22,12 @@ export default defineConfig({
           environment: "node",
           include: ["tests/integration/**/*.test.ts"],
           globalSetup: ["tests/support/integration-global-setup.ts"],
-          env: { NODE_ENV: "test", DATABASE_URL: process.env.TEST_DATABASE_URL ?? "" },
+          env: {
+            NODE_ENV: "test",
+            DATABASE_URL: process.env.TEST_DATABASE_URL ?? "",
+            // Test-only key (32 zero-ish bytes); never used outside tests.
+            ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
+          },
           fileParallelism: false,
           testTimeout: 20_000,
           hookTimeout: 60_000,

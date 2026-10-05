@@ -76,8 +76,9 @@ export const PROVIDER_STYLE: Record<string, { label: string; color: string }> = 
 export const STATUS_STYLE = {
   WORKING: { label: "Working", color: "var(--color-primary)" },
   WAITING: { label: "Needs approval", color: "var(--color-warning)" },
-  IDLE: { label: "Idle", color: "var(--color-muted)" },
+  IDLE: { label: "Idle", color: "var(--color-cyan)" },
   FAILED: { label: "Failed", color: "var(--color-error)" },
+  OFFLINE: { label: "Offline", color: "var(--color-muted)" },
 } as const;
 
 export function tint(color: string, pct: number): string {

@@ -18,7 +18,8 @@ export interface WorkforceDepartment {
   agents: WorkforceAgent[];
 }
 
-export type AgentStatus = "WORKING" | "WAITING" | "IDLE" | "FAILED";
+/** OFFLINE only occurs for real agents (no heartbeat yet); the preview simulation never produces it. */
+export type AgentStatus = "WORKING" | "WAITING" | "IDLE" | "FAILED" | "OFFLINE";
 export type TraceStage = "start" | "llm" | "tool" | "review" | "done" | "failed";
 
 /** Live state of an agent, driven by events (or the preview simulation). */

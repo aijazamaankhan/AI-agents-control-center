@@ -56,6 +56,36 @@ Update this file at the end of every phase.
 - Tests: schema unit tests, integration (CRUD, uniqueness, RBAC, cross-tenant isolation,
   audit), E2E (onboarding step 2, CRUD, API incl. CSRF rejection).
 
+### Website & delivery (2.5)
+
+- Full landing page: header + mobile menu, hero, works-with strip, live map, answers,
+  how it works, 12 features, approvals/budget example, SDK sample, security, platforms,
+  FAQ, final CTA, footer.
+- **Book Demo** and the footer **Velorex Studio — IT Services** credit open working
+  popup forms. Requests are saved to `inquiries` and emailed to
+  velorexdesign@gmail.com via Resend (needs `EMAIL_PROVIDER_API_KEY`); honeypot +
+  rate limit.
+- One-command run: `docker compose up --build`; `npm run setup` for Node users.
+
+### Phase 3 — Agents
+
+- Tables: `agents` (`agt_` IDs, unique name per org, department FK with restrict),
+  `agent_credentials` (AES-256-GCM, AAD-bound to org + agent), `agent_api_keys`
+  (SHA-256 hashes, shown once, rotatable), `agent_capabilities` (allowed / needs
+  approval / not allowed).
+- `/agents` list with search + department/status filters; `/agents/new` connect flow
+  (details, connection type, endpoint + auth, capabilities, **Test connection**,
+  one-time API key + `.env` snippet); `/agents/[id]` with Overview, Tasks, Activity,
+  Usage & costs, Permissions (view/edit) and Settings (edit, rotate key, delete).
+- Test connection: SSRF-guarded (private/loopback/metadata IPs blocked unless
+  `ALLOW_PRIVATE_AGENT_ENDPOINTS=true`), no redirects, 5 s timeout, rate limited.
+- Status starts **Offline** until heartbeats arrive (Phase 4) — never faked.
+- Dashboard: real agent KPIs; the workforce map switches from the sample to the
+  organization's real departments + agents once the first agent is connected.
+- Departments show real agent counts/lists; a department with agents can't be deleted.
+- Audit: agent created/updated/deleted, credential updated, permission changed (diff),
+  API key rotated, connection tested.
+
 ## 🔜 Next
 
 | Phase | Scope                 | Key deliverables                                                                                                                                                               |
@@ -75,6 +105,5 @@ Update this file at the end of every phase.
 - No email verification / password reset (needs an email provider).
 - No organization switcher (users with several orgs use their first).
 - Rate limiter is in-memory (Redis in Phase 4).
-- Deleting a department will be blocked while agents are assigned once agents exist (Phase 3).
 - Managers currently see all departments; per-department assignment is Phase 2b.
 - Global search and notifications are placeholders until Phases 5 and 9.

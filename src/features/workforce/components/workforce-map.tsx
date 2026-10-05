@@ -4,7 +4,8 @@ import { ChevronLeft, ChevronRight, FlaskConical, Pause, Play } from "lucide-rea
 import { useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { computeLayout, LAYOUT } from "../layout";
-import type { WorkforceDepartment } from "../types";
+import type { SimState } from "../simulation";
+import type { AgentRuntime, WorkforceDepartment } from "../types";
 import { STATUS_STYLE } from "../visuals";
 import { ActivityFeed } from "./activity-feed";
 import { DetailPanel } from "./detail-panel";
@@ -16,17 +17,33 @@ interface WorkforceMapProps {
   /** Marks the data as sample/preview — required whenever data isn't the org's own. */
   sample?: boolean;
   variant?: "dashboard" | "landing";
+  /** Real agent state (no simulation). Provide whenever departments are the org's own data. */
+  live?: { runtime: Record<string, AgentRuntime> };
   className?: string;
 }
 
 export function WorkforceMap({
   departments,
   sample = false,
+  live,
   variant = "dashboard",
   className,
 }: WorkforceMapProps) {
   const layout = useMemo(() => computeLayout(departments), [departments]);
-  const { state, running, setRunning } = useWorkforceSim(departments);
+  const sim = useWorkforceSim(departments, { enabled: !live });
+  const { running, setRunning } = sim;
+  const state: SimState = useMemo(
+    () =>
+      live
+        ? {
+            agents: live.runtime,
+            events: [],
+            totals: { tokens: 0, cost: 0, completed: 0, failed: 0 },
+            seq: 0,
+          }
+        : sim.state,
+    [live, sim.state],
+  );
   const reducedMotion = usePrefersReducedMotion();
   const [selection, setSelection] = useState<Selection>(null);
   const scroller = useRef<HTMLDivElement>(null);
@@ -169,6 +186,9 @@ export function WorkforceMap({
               events={state.events}
               departments={departments}
               limit={variant === "dashboard" ? 12 : 6}
+              emptyText={
+                live ? "Agent activity will appear here when your agents start working." : undefined
+              }
             />
           </div>
         </aside>

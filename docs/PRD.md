@@ -97,6 +97,17 @@ master specification and summarized per phase in `UX_FLOWS.md`, `API.md`,
 - [x] Audit log for department changes; checklist reflects real state.
 - [x] Unit, integration (incl. cross-tenant) and E2E tests.
 
+## 6c. Phase 3 acceptance
+
+- [x] `/agents`, `/agents/new`, `/agents/[id]` (tabs) with empty/loading states.
+- [x] Connection types SDK, REST API, Webhook, MCP, API integration, Custom; endpoint + auth.
+- [x] Permanent `agt_` IDs; encrypted credentials; one-time, rotatable API keys.
+- [x] Capabilities: allowed / approval required / not allowed (view + edit, audited).
+- [x] Test connection (SSRF-safe) with clear outcomes.
+- [x] Statuses with icon + label; real KPIs; live map switches from sample to real agents.
+- [x] Department ↔ agent integration; department delete blocked while agents exist.
+- [x] Unit, integration (encryption at rest, isolation, RBAC) and E2E tests.
+
 ## 7. Assumptions (documented per "do not guess" rule)
 
 - **A1** _Book Demo_ links to a `mailto:` placeholder until a sales flow exists.
@@ -109,5 +120,9 @@ master specification and summarized per phase in `UX_FLOWS.md`, `API.md`,
 - **A6** Before any agent is connected, the dashboard's workforce map shows a sample
   workforce with simulated activity, always badged "Sample workforce · simulated".
   KPI cards never use sample data. The landing page uses the same preview.
+- **A7** Brand in the footer is **"Velorex Studio — IT Services"** (matching the inbox
+  velorexdesign@gmail.com); change `STUDIO` in `src/config/site.ts` if different.
+- **A8** New agents are `OFFLINE` until they send a heartbeat/event (Phase 4); a passing
+  "Test connection" records _verified_ but does not fake an online status.
 - **A5** Onboarding steps 2–5 (departments, connect agent, invite team) land with
   the phases that own those features; the checklist reflects real state.

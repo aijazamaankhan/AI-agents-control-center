@@ -11,9 +11,12 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { buttonStyles } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { StatusIndicator } from "@/components/ui/status-indicator";
+import { AgentAvatar } from "@/features/agents/components/agent-avatar";
+import { listAgents } from "@/features/agents/server/agent-service";
 import { KpiCard } from "@/features/dashboard/components/kpi-card";
 import { DeleteDepartment } from "@/features/departments/components/delete-department";
 import { EditDepartmentForm } from "@/features/departments/components/department-form";
@@ -42,14 +45,48 @@ export default async function DepartmentPage({ params }: { params: Promise<{ id:
     day: "numeric",
   });
 
+  const agents = await listAgents(ctx, { departmentId: dep.id });
+  const working = agents.filter((a) => a.status === "WORKING").length;
+  const noEvents = "Available once agents report events";
   const metrics = [
-    { label: "Agents", value: "0", icon: Bot, accent: "var(--color-foreground)" },
-    { label: "Working", value: "0", icon: Loader, accent: "var(--color-primary)" },
-    { label: "Tasks today", value: "0", icon: ListChecks, accent: "var(--color-cyan)" },
-    { label: "Success rate", value: "—", icon: Percent, accent: "var(--color-primary)" },
-    { label: "Tokens", value: "0", icon: Coins, accent: "var(--color-purple)" },
-    { label: "AI cost", value: "$0.00", icon: CircleDollarSign, accent: "var(--color-lime)" },
+    {
+      label: "Agents",
+      value: String(agents.length),
+      icon: Bot,
+      accent: "var(--color-foreground)",
+      caption: agents.length ? "Connected" : "No agents yet",
+    },
+    {
+      label: "Working",
+      value: String(working),
+      icon: Loader,
+      accent: "var(--color-primary)",
+      caption: "Right now",
+    },
+    {
+      label: "Tasks today",
+      value: "0",
+      icon: ListChecks,
+      accent: "var(--color-cyan)",
+      caption: noEvents,
+    },
+    {
+      label: "Success rate",
+      value: "—",
+      icon: Percent,
+      accent: "var(--color-primary)",
+      caption: noEvents,
+    },
+    { label: "Tokens", value: "0", icon: Coins, accent: "var(--color-purple)", caption: noEvents },
+    {
+      label: "AI cost",
+      value: "$0.00",
+      icon: CircleDollarSign,
+      accent: "var(--color-lime)",
+      caption: noEvents,
+    },
   ];
+  const canConnect = can(ctx.role, "agents:manage");
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-6">
@@ -87,7 +124,7 @@ export default async function DepartmentPage({ params }: { params: Promise<{ id:
         className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6"
       >
         {metrics.map((m) => (
-          <KpiCard key={m.label} {...m} caption="No agents yet" />
+          <KpiCard key={m.label} {...m} />
         ))}
       </section>
 
@@ -97,16 +134,55 @@ export default async function DepartmentPage({ params }: { params: Promise<{ id:
             <CardHeader>
               <CardTitle>Agents</CardTitle>
             </CardHeader>
-            <EmptyState
-              icon={Bot}
-              title={`No agents in ${dep.name} yet.`}
-              description="Connect an agent and assign it to this department to see its status, tasks, tokens and cost here."
-              action={
-                <Button disabled title="Agent connections are coming in Phase 3">
-                  Connect Agent
-                </Button>
-              }
-            />
+            {agents.length === 0 ? (
+              <EmptyState
+                icon={Bot}
+                title={`No agents in ${dep.name} yet.`}
+                description="Connect an agent and assign it to this department to see its status, tasks, tokens and cost here."
+                action={
+                  canConnect ? (
+                    <Link
+                      href={`/agents/new?department=${dep.id}`}
+                      className={buttonStyles("primary", "md")}
+                    >
+                      Connect Agent
+                    </Link>
+                  ) : null
+                }
+              />
+            ) : (
+              <CardContent>
+                <ul className="divide-y divide-border" aria-label={`Agents in ${dep.name}`}>
+                  {agents.map((a) => (
+                    <li key={a.id}>
+                      <Link
+                        href={`/agents/${a.id}`}
+                        className="flex items-center gap-3 py-3 hover:text-foreground"
+                      >
+                        <AgentAvatar provider={a.provider} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium text-foreground">
+                            {a.name}
+                          </span>
+                          <span className="block truncate text-xs text-muted">
+                            {a.provider} · {a.model}
+                          </span>
+                        </span>
+                        <StatusIndicator status={a.status} />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                {canConnect ? (
+                  <Link
+                    href={`/agents/new?department=${dep.id}`}
+                    className={buttonStyles("secondary", "sm", "mt-3")}
+                  >
+                    Connect another agent
+                  </Link>
+                ) : null}
+              </CardContent>
+            )}
           </Card>
           <Card className="rounded-[22px]">
             <CardHeader>

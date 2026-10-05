@@ -67,3 +67,27 @@ a note explaining the required role.
 
 Every data route has `loading.tsx` (skeleton) and `error.tsx`
 ("Unable to load …" + **[Try Again]**).
+
+## Agents (Phase 3)
+
+- `/agents` — search + department/status filters; rows show avatar (provider), name +
+  `agt_` id, department, provider/model + connection type, status (icon + label), last
+  active. Empty: "Your AI workforce is empty." → Connect Your First Agent (or "Create a
+  department" when none exist).
+- `/agents/new` (OWNER/ADMIN) — ① details (name, department, provider, model with
+  suggestions, description) ② connection (type cards, endpoint, auth, secret) with
+  **Test connection** ③ capabilities (suggested chips + custom, rule per row) →
+  **Connect Agent** → success panel with one-time API key, `.env` snippet, Open agent /
+  Connect another. `?department=<id>` preselects the department.
+- `/agents/[id]` — header (avatar, name, status, department link, provider · model,
+  copyable id) and tabs: Overview (metrics, profile, connection), Tasks, Activity, Usage
+  & costs (empty until Phase 4–6), Permissions (grouped rules + editor), Settings
+  (edit form, rotate API key, delete — two-step confirmations).
+
+## Website popups
+
+- **Book Demo** (hero, final CTA, footer) → dialog: name, work email, company, team size,
+  phone, message → "Request sent".
+- Footer **Velorex Studio — IT Services** → dialog: name, email, company, phone,
+  service, budget, timeline, project details → "Request sent". Both close with Esc,
+  the ✕ button or a backdrop click, and trap focus while open.

@@ -216,7 +216,7 @@ export function stepSim(
 
 export function countByStatus(state: SimState, agentIds?: string[]) {
   const ids = agentIds ?? Object.keys(state.agents);
-  const out = { WORKING: 0, WAITING: 0, IDLE: 0, FAILED: 0 };
+  const out = { WORKING: 0, WAITING: 0, IDLE: 0, FAILED: 0, OFFLINE: 0 };
   for (const id of ids) {
     const s = state.agents[id]?.status;
     if (s) out[s] += 1;

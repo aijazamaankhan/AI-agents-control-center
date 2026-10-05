@@ -1,10 +1,13 @@
 import "server-only";
 import type { OrgContext } from "@/lib/auth/sessions";
-import { countDepartments } from "@/features/departments/server/department-service";
+import { agentStatusCounts } from "@/features/agents/server/agent-service";
+import { listDepartments } from "@/features/departments/server/department-service";
 import {
   countMembers,
   getOrganization,
 } from "@/features/organizations/server/organization-service";
+import type { AgentRuntime, Provider, WorkforceDepartment } from "@/features/workforce/types";
+import { db } from "@/lib/db/client";
 
 export interface ChecklistItem {
   key: string;
@@ -17,14 +20,15 @@ export interface ChecklistItem {
  * built yet are reported as not done — never faked (docs/PRD.md §5).
  */
 export async function getOnboardingChecklist(ctx: OrgContext): Promise<ChecklistItem[]> {
-  const [memberCount, departmentCount] = await Promise.all([
+  const [memberCount, departmentCount, agents] = await Promise.all([
     countMembers(ctx),
-    countDepartments(ctx),
+    db.department.count({ where: { organizationId: ctx.organizationId } }),
+    agentStatusCounts(ctx),
   ]);
   return [
     { key: "company", label: "Company created", done: true },
     { key: "departments", label: "Departments created", done: departmentCount > 0 },
-    { key: "agent", label: "First agent connected", done: false },
+    { key: "agent", label: "First agent connected", done: agents.total > 0 },
     { key: "team", label: "Invite team", done: memberCount > 1 },
     { key: "budget", label: "Configure budget", done: false },
     { key: "integration", label: "Connect integration", done: false },
@@ -49,14 +53,89 @@ export function greetingFor(date: Date, timezone: string): string {
   return "Good evening";
 }
 
+const KNOWN_PROVIDERS: Provider[] = ["Anthropic", "OpenAI", "Google"];
+
+/** Map status from the stored agent status (the map shows 5 visual states). */
+export function runtimeStatus(status: string): AgentRuntime["status"] {
+  switch (status) {
+    case "WORKING":
+      return "WORKING";
+    case "WAITING":
+      return "WAITING";
+    case "FAILED":
+      return "FAILED";
+    case "ONLINE":
+    case "IDLE":
+      return "IDLE";
+    default:
+      return "OFFLINE";
+  }
+}
+
+/** The organization's real workforce for the map: every department, with its agents. */
+export async function getWorkforceSnapshot(ctx: OrgContext) {
+  const [departments, agents] = await Promise.all([
+    listDepartments(ctx),
+    db.agent.findMany({
+      where: { organizationId: ctx.organizationId },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        provider: true,
+        model: true,
+        status: true,
+        departmentId: true,
+        capabilities: { select: { label: true }, orderBy: { createdAt: "asc" } },
+      },
+    }),
+  ]);
+  const workforce: WorkforceDepartment[] = departments.map((d) => ({
+    id: d.id,
+    name: d.name,
+    agents: agents
+      .filter((a) => a.departmentId === d.id)
+      .map((a) => ({
+        id: a.id,
+        name: a.name,
+        provider: (KNOWN_PROVIDERS as string[]).includes(a.provider)
+          ? (a.provider as Provider)
+          : "Custom",
+        model: a.model,
+        tools: a.capabilities.map((c) => c.label),
+        tasks: [],
+      })),
+  }));
+  const runtime: Record<string, AgentRuntime> = Object.fromEntries(
+    agents.map((a) => [
+      a.id,
+      {
+        status: runtimeStatus(a.status),
+        stage: null,
+        task: null,
+        tool: null,
+        tokens: 0,
+        cost: 0,
+        completed: 0,
+        failed: 0,
+      },
+    ]),
+  );
+  return { workforce, runtime, agentCount: agents.length };
+}
+
 export async function getDashboardOverview(ctx: OrgContext) {
-  const [organization, checklist] = await Promise.all([
+  const [organization, checklist, counts, snapshot] = await Promise.all([
     getOrganization(ctx),
     getOnboardingChecklist(ctx),
+    agentStatusCounts(ctx),
+    getWorkforceSnapshot(ctx),
   ]);
   return {
     organization,
     checklist,
+    counts,
+    snapshot,
     greeting: greetingFor(new Date(), organization.timezone),
   };
 }

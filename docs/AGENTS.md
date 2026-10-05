@@ -54,3 +54,13 @@ the API key server-side.
 
 Per-agent capability rules: _allowed_, _denied_, _approval required_. Enforced
 server-side when an agent requests an action (Phase 7).
+
+## Implemented in Phase 3
+
+- Connect via `/agents/new`; the agent receives an API key `aos_live_…` (shown once).
+  Put it in the agent's environment as `AGENTOS_API_KEY` with `AGENTOS_AGENT_ID`.
+- Endpoint credentials (API key header, bearer token, basic auth) are encrypted at rest
+  and only used server-side (e.g. Test connection).
+- Capabilities carry a rule: `ALLOWED`, `APPROVAL_REQUIRED`, `DENIED`. Enforcement on
+  agent action requests and the approval queue arrive in Phase 7.
+- Status is `OFFLINE` until the agent reports (Phase 4 heartbeat/events).

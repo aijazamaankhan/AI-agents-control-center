@@ -19,15 +19,21 @@ interface ActivityFeedProps {
   events: ActivityEvent[];
   departments: WorkforceDepartment[];
   limit?: number;
+  emptyText?: string;
 }
 
-export function ActivityFeed({ events, departments, limit = 10 }: ActivityFeedProps) {
+export function ActivityFeed({
+  events,
+  departments,
+  limit = 10,
+  emptyText = "Waiting for the first agent event…",
+}: ActivityFeedProps) {
   const indexOf = (id: string) => departments.findIndex((d) => d.id === id);
 
   if (events.length === 0) {
     return (
       <div className="flex items-center gap-2 px-1 py-6 text-sm text-muted">
-        <Activity aria-hidden className="size-4" /> Waiting for the first agent event…
+        <Activity aria-hidden className="size-4 shrink-0" /> {emptyText}
       </div>
     );
   }

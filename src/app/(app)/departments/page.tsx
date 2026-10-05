@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { NewDepartmentForm } from "@/features/departments/components/department-form";
 import { MAX_DEPARTMENTS } from "@/features/departments/schemas";
+import { agentCountsByDepartment } from "@/features/agents/server/agent-service";
 import { listDepartments } from "@/features/departments/server/department-service";
 import { DepartmentIcon } from "@/features/workforce/components/department-icon";
 import { departmentAccent, tint } from "@/features/workforce/visuals";
@@ -15,7 +16,10 @@ export const metadata: Metadata = { title: "Departments" };
 
 export default async function DepartmentsPage() {
   const ctx = await requireOrgContext();
-  const departments = await listDepartments(ctx);
+  const [departments, agentCounts] = await Promise.all([
+    listDepartments(ctx),
+    agentCountsByDepartment(ctx),
+  ]);
   const canManage = can(ctx.role, "departments:manage");
 
   return (
@@ -84,11 +88,11 @@ export default async function DepartmentsPage() {
                   <div className="mt-4 flex items-end justify-between border-t border-border pt-3">
                     <div>
                       <p className="font-display text-3xl leading-none font-medium text-foreground tabular-nums">
-                        0
+                        {agentCounts[dep.id] ?? 0}
                       </p>
                       <p className="mt-1 text-[11px] tracking-wide text-muted uppercase">Agents</p>
                     </div>
-                    <p className="text-[11px] text-muted">Agents arrive in Phase 3</p>
+                    <p className="text-[11px] text-muted">View agents →</p>
                   </div>
                 </Link>
               </li>

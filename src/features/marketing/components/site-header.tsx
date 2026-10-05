@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Logo } from "@/components/logo";
 import { buttonStyles } from "@/components/ui/button";
 
-export const SECTIONS = [
+const SECTIONS = [
   { href: "#product", label: "Product" },
   { href: "#how-it-works", label: "How it works" },
   { href: "#features", label: "Features" },

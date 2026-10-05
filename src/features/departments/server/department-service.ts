@@ -212,7 +212,15 @@ export async function deleteDepartment(ctx: OrgContext, id: string, meta: Reques
       where: { id, organizationId: ctx.organizationId },
     });
     if (!dep) throw new AppError("RESOURCE_NOT_FOUND", "Department not found");
-    // Phase 3: refuse while agents are assigned (CONFLICT) instead of orphaning them.
+    const agents = await tx.agent.count({
+      where: { departmentId: dep.id, organizationId: ctx.organizationId },
+    });
+    if (agents > 0) {
+      throw new AppError(
+        "CONFLICT",
+        `${dep.name} still has ${agents} agent${agents === 1 ? "" : "s"}. Move or delete them before deleting the department.`,
+      );
+    }
     await tx.department.delete({ where: { id: dep.id } });
     await recordAudit(
       {

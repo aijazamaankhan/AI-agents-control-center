@@ -29,6 +29,10 @@ export default defineConfig({
     url: `${baseURL}/api/health`,
     reuseExistingServer: !process.env.CI,
     timeout: 240_000,
-    env: { DATABASE_URL: databaseUrl ?? "", NODE_ENV: "production" },
+    env: {
+      DATABASE_URL: databaseUrl ?? "",
+      NODE_ENV: "production",
+      ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
+    },
   },
 });
