@@ -93,6 +93,13 @@ export async function logIn(input: LoginInput, meta: RequestMeta = {}): Promise<
     throw new AppError("UNAUTHENTICATED", INVALID_CREDENTIALS);
   }
 
+  if (user.suspendedAt) {
+    throw new AppError(
+      "FORBIDDEN",
+      "This account has been suspended. Contact Velorex Studio support.",
+    );
+  }
+
   await rateLimiter.reset(`login:email:${input.email}`);
   const firstMembership = await db.membership.findFirst({
     where: { userId: user.id },

@@ -36,11 +36,23 @@ export async function authenticateAgent(request: Request): Promise<AgentContext>
       revokedAt: true,
       lastUsedAt: true,
       organizationId: true,
-      agent: { select: { id: true, name: true, departmentId: true, organizationId: true } },
+      agent: {
+        select: {
+          id: true,
+          name: true,
+          departmentId: true,
+          organizationId: true,
+          organization: { select: { suspendedAt: true } },
+        },
+      },
     },
   });
   if (!record || record.revokedAt || record.agent.organizationId !== record.organizationId) {
     throw new AppError("UNAUTHENTICATED", "Invalid or revoked agent API key.");
+  }
+
+  if (record.agent.organization.suspendedAt) {
+    throw new AppError("FORBIDDEN", "This organization is suspended.");
   }
 
   const limited = await rateLimiter.hit(

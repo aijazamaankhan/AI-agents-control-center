@@ -1,6 +1,7 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { LogOut, Settings, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { logoutAction } from "@/features/auth/actions";
 
@@ -9,9 +10,16 @@ interface UserMenuProps {
   email: string;
   roleLabel: string;
   organizationName: string;
+  isPlatformAdmin?: boolean;
 }
 
-export function UserMenu({ name, email, roleLabel, organizationName }: UserMenuProps) {
+export function UserMenu({
+  name,
+  email,
+  roleLabel,
+  organizationName,
+  isPlatformAdmin = false,
+}: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const initials = name
@@ -59,6 +67,26 @@ export function UserMenu({ name, email, roleLabel, organizationName }: UserMenuP
             </p>
           </div>
           <div className="my-1 border-t border-border" />
+          <Link
+            href="/settings"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2 rounded-control px-3 py-2 text-sm text-muted hover:bg-surface hover:text-foreground"
+          >
+            <Settings aria-hidden className="size-4" />
+            Settings
+          </Link>
+          {isPlatformAdmin ? (
+            <Link
+              href="/admin"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-2 rounded-control px-3 py-2 text-sm text-orange hover:bg-surface"
+            >
+              <ShieldCheck aria-hidden className="size-4" />
+              Velorex admin panel
+            </Link>
+          ) : null}
           <form action={logoutAction}>
             <button
               type="submit"

@@ -2,12 +2,13 @@ import { Bell, CircleHelp, Search } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { MobileNav } from "./mobile-nav";
 import { SidebarNav } from "./sidebar-nav";
 import { UserMenu } from "./user-menu";
 
 interface AppShellProps {
-  user: { name: string; email: string };
+  user: { name: string; email: string; isPlatformAdmin?: boolean };
   organizationName: string;
   roleLabel: string;
   children: ReactNode;
@@ -50,6 +51,7 @@ export function AppShell({ user, organizationName, roleLabel, children }: AppShe
             />
           </form>
           <div className="ml-auto flex items-center gap-1">
+            <ThemeToggle className="mr-1 hidden sm:inline-flex" />
             <button
               type="button"
               aria-label="Notifications (none)"
@@ -70,6 +72,7 @@ export function AppShell({ user, organizationName, roleLabel, children }: AppShe
                 email={user.email}
                 roleLabel={roleLabel}
                 organizationName={organizationName}
+                isPlatformAdmin={user.isPlatformAdmin}
               />
             </div>
           </div>

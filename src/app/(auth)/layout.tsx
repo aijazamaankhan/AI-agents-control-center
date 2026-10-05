@@ -2,13 +2,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { getCurrentSession } from "@/lib/auth/guards";
 
 export default async function AuthLayout({ children }: { children: ReactNode }) {
   if (await getCurrentSession()) redirect("/dashboard");
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center px-4 py-12">
+    <div className="relative flex min-h-dvh flex-col items-center justify-center px-4 py-12">
+      <ThemeToggle className="absolute top-4 right-4" />
       <Link href="/" className="mb-8" aria-label="AgentOS home">
         <Logo />
       </Link>

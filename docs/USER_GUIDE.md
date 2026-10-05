@@ -99,9 +99,38 @@ link open forms. Submissions are emailed to velorexdesign@gmail.com once
 `EMAIL_PROVIDER_API_KEY` is set (see `ENV.md` → "Sending enquiry emails") and are always
 saved in the database (`npx prisma studio` → `Inquiry`).
 
-### 8. Settings & roles
+### 8. Theme
 
-**Settings** holds your organization profile (owners and admins can edit).
+Use the ☀ / ☾ / 🖥 switch in the top bar (or Settings → Appearance) for light, dark or
+system theme. The choice is remembered on this device.
+
+### 9. Velorex Studio admin panel (platform owners only)
+
+Open the account menu → **Velorex admin panel**, or go to `/admin`.
+
+- **Overview** — customers, users, agents, tasks and events across the platform.
+- **Customers** — every company: members, departments, agents and their API keys.
+  **Suspend** blocks the company's users and agents until you **Reactivate**.
+- **Users** — **Sign out everywhere**, **Reset password** (a one-time temporary password is
+  shown to you — share it securely), **Suspend / Reactivate**.
+- **Enquiries** — website project requests and demo requests; **Mark handled**.
+- **Audit log** — every security-relevant action, including all admin actions.
+
+Passwords and agent secrets can never be viewed by anyone (they're hashed/encrypted) —
+reset or revoke them instead.
+
+Give someone admin access (run on the server, after they sign up):
+
+```powershell
+npm run admin:grant -- --email person@velorex.dev        # add  --revoke  to remove
+```
+
+The local demo owner (`demo@agentos.dev`) is already an admin.
+
+### 10. Settings & roles
+
+**Settings** has tabs: Organization (owners/admins can edit), Profile, Security
+(change password, active sessions, sign out other devices) and Appearance (theme).
 
 | Role    | Can do                                              |
 | ------- | --------------------------------------------------- |

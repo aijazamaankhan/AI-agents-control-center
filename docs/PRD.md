@@ -117,6 +117,14 @@ master specification and summarized per phase in `UX_FLOWS.md`, `API.md`,
 - [x] Live activity via SSE on the dashboard; agent Tasks/Activity tabs.
 - [x] Unit, integration (route handlers + Postgres) and E2E tests.
 
+## 6e. Theme, account controls & platform admin
+
+- [x] Light / dark / system theme without flash; toggles in app, landing, auth, settings.
+- [x] Settings: organization, profile, password change, sessions, appearance.
+- [x] Separate Velorex Studio admin panel: customers, users, enquiries, audit; suspend /
+      reactivate, sign out everywhere, temporary password reset, revoke agent keys.
+- [x] Admin access only via CLI; secrets never viewable; all admin actions audited.
+
 ## 7. Assumptions (documented per "do not guess" rule)
 
 - **A1** _Book Demo_ links to a `mailto:` placeholder until a sales flow exists.

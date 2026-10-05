@@ -123,7 +123,8 @@ try {
   const userId = id("usr");
   const orgId = id("org");
   await client.query(
-    "INSERT INTO users (id, email, name, password_hash, updated_at) VALUES ($1, $2, $3, $4, now())",
+    // Local owner accounts also get Velorex platform-admin access (dev only — never in production).
+    "INSERT INTO users (id, email, name, password_hash, is_platform_admin, updated_at) VALUES ($1, $2, $3, $4, true, now())",
     [userId, DEMO_EMAIL, OWNER_NAME, await hashPassword(DEMO_PASSWORD)],
   );
   await client.query(
@@ -192,7 +193,7 @@ try {
     /* no .env — key is printed below */
   }
 
-  console.log("\n✔ Owner account created (full access)");
+  console.log("\n✔ Owner account created (full access + Velorex admin panel at /admin)");
   console.log(`   Email:    ${DEMO_EMAIL}`);
   console.log(`   Password: ${DEMO_PASSWORD}`);
   console.log("   Company:  Acme Corporation (Demo) — 8 departments, 6 agents");

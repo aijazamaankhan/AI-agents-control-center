@@ -13,6 +13,8 @@ export interface SessionUser {
   id: string;
   name: string;
   email: string;
+  /** Velorex Studio staff with access to /admin. */
+  isPlatformAdmin: boolean;
 }
 
 export interface ResolvedSession {
@@ -27,6 +29,8 @@ export interface OrgContext {
   user: SessionUser;
   organizationId: string;
   role: Role;
+  /** Suspended by Velorex Studio — members are blocked until reactivated. */
+  organizationSuspended: boolean;
 }
 
 export async function createSession(
@@ -56,16 +60,28 @@ export async function resolveSessionToken(
   if (!token || token.length > 128) return null;
   const session = await db.session.findUnique({
     where: { tokenHash: hashSessionToken(token) },
-    include: { user: { select: { id: true, name: true, email: true } } },
+    include: {
+      user: {
+        select: { id: true, name: true, email: true, isPlatformAdmin: true, suspendedAt: true },
+      },
+    },
   });
   if (!session) return null;
+  // Suspended users lose access immediately, even with a valid session.
+  if (session.user.suspendedAt) return null;
   if (session.expiresAt.getTime() <= Date.now()) {
     await db.session.delete({ where: { id: session.id } }).catch(() => undefined);
     return null;
   }
+  const user: SessionUser = {
+    id: session.user.id,
+    name: session.user.name,
+    email: session.user.email,
+    isPlatformAdmin: session.user.isPlatformAdmin,
+  };
   return {
     sessionId: session.id,
-    user: session.user,
+    user,
     activeOrganizationId: session.activeOrganizationId,
   };
 }
@@ -76,6 +92,7 @@ export async function resolveSessionToken(
  * immediately. Falls back to the user's earliest membership.
  */
 export async function resolveOrgContext(session: ResolvedSession): Promise<OrgContext | null> {
+  const include = { organization: { select: { suspendedAt: true } } } as const;
   let membership = session.activeOrganizationId
     ? await db.membership.findUnique({
         where: {
@@ -84,6 +101,7 @@ export async function resolveOrgContext(session: ResolvedSession): Promise<OrgCo
             userId: session.user.id,
           },
         },
+        include,
       })
     : null;
 
@@ -91,6 +109,7 @@ export async function resolveOrgContext(session: ResolvedSession): Promise<OrgCo
     membership = await db.membership.findFirst({
       where: { userId: session.user.id },
       orderBy: { createdAt: "asc" },
+      include,
     });
     await db.session.update({
       where: { id: session.sessionId },
@@ -104,6 +123,7 @@ export async function resolveOrgContext(session: ResolvedSession): Promise<OrgCo
     user: session.user,
     organizationId: membership.organizationId,
     role: membership.role,
+    organizationSuspended: Boolean(membership.organization.suspendedAt),
   };
 }
 

@@ -116,6 +116,23 @@ convenience but is never the enforcement point.
 - **Live stream**: `/api/v1/activity/stream` requires a session and only ever queries
   the caller's organization.
 
+## 6d. Platform administration (Velorex Studio)
+
+- `User.isPlatformAdmin` can only be set from the server CLI (`npm run admin:grant`); there
+  is no UI to grant it. `/admin/*` returns 404 to everyone else (`requirePlatformAdmin`), and
+  every admin service function re-asserts the flag (defence in depth). All admin actions are
+  audited as `admin.*` with the acting admin.
+- Admins **cannot read secrets**: passwords are one-way scrypt hashes and agent credentials
+  are AES-GCM encrypted; the panel only shows hints/prefixes. Admins can _reset_ a password
+  (one-time temporary value shown once, all sessions revoked) and _revoke_ agent API keys.
+- Admins can't suspend or reset themselves from the panel, and must remove admin access
+  before suspending another admin.
+- Suspended user → `resolveSessionToken` returns null (instant sign-out), login is `403`.
+  Suspended organization → pages redirect to `/suspended`, `getCurrentOrgContext` returns
+  null (all server actions/APIs refused), agent API keys are `403`.
+- Account security: password change requires the current password and revokes all other
+  sessions; users can list and revoke their sessions.
+
 ## 7. HTTP security headers
 
 Set in `next.config.ts` for all routes: `Content-Security-Policy` (production),

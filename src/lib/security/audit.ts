@@ -21,7 +21,20 @@ export type AuditAction =
   | "agent.connection_tested"
   | "agent.api_key_rotated"
   | "credential.updated"
-  | "permission.changed";
+  | "permission.changed"
+  | "user.profile_updated"
+  | "user.password_changed"
+  | "user.sessions_revoked"
+  | "admin.organization_suspended"
+  | "admin.organization_reactivated"
+  | "admin.user_suspended"
+  | "admin.user_reactivated"
+  | "admin.user_sessions_revoked"
+  | "admin.user_password_reset"
+  | "admin.agent_keys_revoked"
+  | "admin.inquiry_handled"
+  | "admin.platform_admin_granted"
+  | "admin.platform_admin_revoked";
 
 export interface AuditEntry {
   action: AuditAction;

@@ -28,7 +28,8 @@
     "dev:next": "next dev",
     "db:local:stop": "prisma dev stop agentos",
     "demo:agent": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/demo-agent.mjs",
-    "seed:demo": "node scripts/seed-demo.mjs"
+    "seed:demo": "node scripts/seed-demo.mjs",
+    "admin:grant": "node scripts/admin-grant.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

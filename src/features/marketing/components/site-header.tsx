@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonStyles } from "@/components/ui/button";
 
 const SECTIONS = [
@@ -46,6 +47,7 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="ml-auto hidden items-center gap-2 sm:flex">
+          <ThemeToggle />
           <Link href="/login" className={buttonStyles("ghost", "sm")}>
             Sign in
           </Link>

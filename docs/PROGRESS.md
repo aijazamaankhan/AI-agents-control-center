@@ -125,6 +125,22 @@ Update this file at the end of every phase.
   only; `npm run seed:demo -- --email … --password …` for your own owner account).
   In development the error page shows the real cause and a fix hint.
 
+### Theme, controls & Velorex admin panel
+
+- **Theme mode**: dark / light / system, switchable from the top bar, landing page,
+  sign-in pages and Settings → Appearance; applied before first paint (no flash).
+- **Settings tabs**: Organization, Profile (name), Security (change password — signs out
+  other devices; active sessions list; sign out all other sessions), Appearance.
+- **Velorex Studio admin panel** (`/admin`, separate shell): platform overview, Customers
+  (search, members, departments, agents, keys; suspend / reactivate), Users (suspend,
+  sign out everywhere, reset to a one-time temporary password), Enquiries (Velorex project
+  and demo requests; mark handled), platform Audit log. Hidden (404) from non-staff.
+- Suspensions are enforced everywhere: suspended users can't sign in and lose sessions;
+  suspended organizations are redirected to a notice, and their actions, APIs and agent
+  keys are refused.
+- Admin access is granted only via `npm run admin:grant -- --email …` (the local seeded
+  owner is an admin automatically).
+
 ## 🔜 Next
 
 | Phase | Scope                 | Key deliverables                                                                                                                                                               |

@@ -66,3 +66,32 @@ describe("organization schema", () => {
     expect(slugify("!!!")).toBe("org");
   });
 });
+
+import { changePasswordSchema } from "@/features/account/schemas";
+
+describe("change password schema", () => {
+  const ok = {
+    currentPassword: "old-password-1",
+    newPassword: "new-password-1",
+    confirmPassword: "new-password-1",
+  };
+  it("accepts a valid change", () => {
+    expect(changePasswordSchema.safeParse(ok).success).toBe(true);
+  });
+  it("requires matching confirmation, a different and long-enough password", () => {
+    expect(
+      changePasswordSchema.safeParse({ ...ok, confirmPassword: "nope-nope-nope" }).success,
+    ).toBe(false);
+    expect(
+      changePasswordSchema.safeParse({
+        ...ok,
+        newPassword: "old-password-1",
+        confirmPassword: "old-password-1",
+      }).success,
+    ).toBe(false);
+    expect(
+      changePasswordSchema.safeParse({ ...ok, newPassword: "short", confirmPassword: "short" })
+        .success,
+    ).toBe(false);
+  });
+});

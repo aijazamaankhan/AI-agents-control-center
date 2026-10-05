@@ -71,6 +71,55 @@
   }
 }
 
+/*
+ * Light theme: same tokens, light values. `data-theme` on <html> is set before paint by
+ * the inline script in app/layout.tsx; "system" leaves it unset and follows the OS.
+ */
+:root[data-theme="light"] {
+  --color-background: #f4f7f5;
+  --color-surface: #ffffff;
+  --color-raised: #eef2f0;
+  --color-elevated: #e5ebe8;
+  --color-border: #dbe2de;
+  --color-border-strong: #c3cdc8;
+  --color-primary: #0b8a4b;
+  --color-primary-hover: #0a7a42;
+  --color-lime: #5f7f00;
+  --color-cyan: #0278a0;
+  --color-purple: #6d3fd6;
+  --color-orange: #c2470b;
+  --color-pink: #c22a62;
+  --color-success: #0b8a4b;
+  --color-warning: #a0650b;
+  --color-error: #c8283f;
+  --color-foreground: #0e1512;
+  --color-muted: #56615c;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --color-background: #f4f7f5;
+    --color-surface: #ffffff;
+    --color-raised: #eef2f0;
+    --color-elevated: #e5ebe8;
+    --color-border: #dbe2de;
+    --color-border-strong: #c3cdc8;
+    --color-primary: #0b8a4b;
+    --color-primary-hover: #0a7a42;
+    --color-lime: #5f7f00;
+    --color-cyan: #0278a0;
+    --color-purple: #6d3fd6;
+    --color-orange: #c2470b;
+    --color-pink: #c22a62;
+    --color-success: #0b8a4b;
+    --color-warning: #a0650b;
+    --color-error: #c8283f;
+    --color-foreground: #0e1512;
+    --color-muted: #56615c;
+    color-scheme: light;
+  }
+}
+
 @layer base {
   :root {
     color-scheme: dark;
