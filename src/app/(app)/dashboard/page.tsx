@@ -19,6 +19,7 @@ import { getDashboardOverview } from "@/features/dashboard/server/dashboard-serv
 import { WorkforceMap } from "@/features/workforce/components/workforce-map";
 import { SAMPLE_WORKFORCE } from "@/features/workforce/sample-data";
 import { formatTokens as formatCompact } from "@/features/workforce/format";
+import { formatUsd } from "@/features/usage/pricing";
 import { requireOrgContext } from "@/lib/auth/guards";
 import { can } from "@/lib/security/permissions";
 
@@ -32,8 +33,9 @@ export default async function DashboardPage() {
   const hasAgents = counts.total > 0;
   const hasDepartments = snapshot.workforce.length > 0;
   const canManage = can(ctx.role, "agents:manage");
+  const cost = today.cost;
 
-  // All counts are real. Cost needs the pricing table (Phase 6), so it stays $0.00 until then.
+  // All counts are real; cost comes from the versioned price list (unpriced calls count as $0).
   const kpis = [
     {
       label: "Total agents",
@@ -86,9 +88,13 @@ export default async function DashboardPage() {
     {
       label: "AI cost",
       icon: CircleDollarSign,
-      value: "$0.00",
+      value: cost ? formatUsd(cost.cost) : "—",
       accent: "var(--color-lime)",
-      caption: "Pricing arrives in Phase 6",
+      caption: !cost
+        ? "Owners, admins & managers"
+        : cost.unpricedCalls
+          ? `Today · ${cost.unpricedCalls} unpriced calls`
+          : "Today",
     },
   ];
 
@@ -136,7 +142,7 @@ export default async function DashboardPage() {
             events: recentEvents,
             totals: {
               tokens: today.tokens,
-              cost: 0,
+              cost: cost?.cost ?? 0,
               completed: today.completed,
               failed: today.failed,
             },

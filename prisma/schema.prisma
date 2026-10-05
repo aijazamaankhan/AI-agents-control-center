@@ -397,3 +397,76 @@ model AuditLog {
   @@index([actorUserId])
   @@map("audit_logs")
 }
+
+/// Platform price list, managed by Velorex admins. USD per 1M tokens. A price is never edited
+/// in place: changing it adds a row with the next `version`, effective from a given time.
+model ModelPrice {
+  id            String   @id
+  /// Normalised "provider/model" key used for matching events (see features/usage/pricing.ts).
+  priceKey      String   @map("price_key")
+  provider      String
+  model         String
+  version       Int
+  inputPerMtok  Decimal  @map("input_per_mtok") @db.Decimal(12, 6)
+  outputPerMtok Decimal  @map("output_per_mtok") @db.Decimal(12, 6)
+  cachedPerMtok Decimal  @map("cached_per_mtok") @db.Decimal(12, 6)
+  effectiveFrom DateTime @map("effective_from") @db.Timestamptz(3)
+  note          String   @default("")
+  createdById   String?  @map("created_by_id")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([priceKey, version])
+  @@index([priceKey, effectiveFrom(sort: Desc)])
+  @@map("model_prices")
+}
+
+/// Cost of one LLM call, written with the event (append-only). `pricingVersion` null = no price
+/// was known for the model at that time (cost 0, "unpriced"); it is priced later when a
+/// matching price is added — already-priced records never change.
+model CostRecord {
+  id             String   @id
+  organizationId String   @map("organization_id")
+  eventId        String   @unique @map("event_id")
+  agentId        String   @map("agent_id")
+  departmentId   String   @map("department_id")
+  taskId         String?  @map("task_id")
+  priceKey       String   @map("price_key")
+  provider       String
+  model          String
+  /// Calendar day in the organization's timezone when the call happened.
+  day            DateTime @db.Date
+  occurredAt     DateTime @map("occurred_at") @db.Timestamptz(3)
+  inputTokens    Int      @map("input_tokens")
+  outputTokens   Int      @map("output_tokens")
+  cachedTokens   Int      @map("cached_tokens")
+  costUsd        Decimal  @default(0) @map("cost_usd") @db.Decimal(24, 12)
+  priceId        String?  @map("price_id")
+  pricingVersion Int?     @map("pricing_version")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([organizationId, day])
+  @@index([priceKey, pricingVersion])
+  @@map("cost_records")
+}
+
+/// Pre-aggregated usage per (organization, day, agent, department, provider, model).
+/// Dashboards and the Costs page read this instead of scanning events.
+model UsageDaily {
+  organizationId String   @map("organization_id")
+  day            DateTime @db.Date
+  agentId        String   @map("agent_id")
+  departmentId   String   @map("department_id")
+  priceKey       String   @map("price_key")
+  provider       String
+  model          String
+  llmCalls       Int      @default(0) @map("llm_calls")
+  unpricedCalls  Int      @default(0) @map("unpriced_calls")
+  inputTokens    BigInt   @default(0) @map("input_tokens")
+  outputTokens   BigInt   @default(0) @map("output_tokens")
+  cachedTokens   BigInt   @default(0) @map("cached_tokens")
+  costUsd        Decimal  @default(0) @map("cost_usd") @db.Decimal(24, 12)
+
+  @@id([organizationId, day, agentId, departmentId, priceKey])
+  @@index([organizationId, day])
+  @@map("usage_daily")
+}

@@ -103,3 +103,50 @@ test("separate admin and company logins with the seeded demo accounts", async ({
   await page.goto("/departments");
   await expect(page.getByRole("main").getByText("Customer Support").first()).toBeVisible();
 });
+
+test("costs & usage: admin adds a price, owners see costs, viewers don't", async ({
+  page,
+}, testInfo) => {
+  execFileSync("node", ["scripts/seed-demo.mjs", "--quiet"], {
+    env: { ...process.env, NODE_ENV: "development", DATABASE_URL: process.env.TEST_DATABASE_URL },
+  });
+  const signIn = async (path: string, email: string, password: string, button: string) => {
+    await page.context().clearCookies();
+    await page.goto(path);
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Password").fill(password);
+    await page.getByRole("button", { name: button, exact: true }).click();
+    await page.waitForURL((url) => !url.pathname.endsWith("/login"));
+  };
+
+  // Velorex admin manages the versioned price list.
+  await signIn(
+    "/admin/login",
+    "admin@velorex.test",
+    "Velorex-admin-2026",
+    "Sign in to admin panel",
+  );
+  await page.goto("/admin/pricing");
+  await expect(page.getByRole("heading", { name: "Pricing" })).toBeVisible();
+  const model = `E2E Model ${testInfo.project.name} ${Date.now()}`;
+  await page.getByLabel("Provider").fill("Anthropic");
+  await page.getByLabel("Model").fill(model);
+  await page.getByLabel("Input $ / 1M tokens").fill("3");
+  await page.getByLabel("Output $ / 1M tokens").fill("15");
+  await page.getByRole("button", { name: "Add price version" }).click();
+  await expect(page.getByText(`Saved Anthropic / ${model} v1.`)).toBeVisible();
+  await expect(page.getByRole("table", { name: "Price list" })).toContainText(model);
+
+  // Company owner sees the Costs & Usage page.
+  await signIn("/login", "demo@agentos.dev", "AgentOS-demo-2026", "Sign in");
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await page.goto("/costs?period=7d");
+  await expect(page.getByRole("heading", { name: "Costs & Usage" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Usage KPIs" })).toContainText("AI cost");
+
+  // Viewers can't see costs.
+  await signIn("/login", "viewer@acme.test", "Acme-viewer-2026", "Sign in");
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await page.goto("/costs");
+  await expect(page.getByText("Costs are visible to owners, admins and managers")).toBeVisible();
+});

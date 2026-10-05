@@ -141,9 +141,11 @@ master specification and summarized per phase in `UX_FLOWS.md`, `API.md`,
   velorexdesign@gmail.com); change `STUDIO` in `src/config/site.ts` if different.
 - **A8** New agents are `OFFLINE` until they send a heartbeat/event (Phase 4); a passing
   "Test connection" records _verified_ but does not fake an online status.
-- **A9** Until the pricing table exists (Phase 6), cost shows `$0.00` with "Pricing
-  arrives in Phase 6" — tokens are real, cost is never estimated ad hoc.
+- **A9** Cost comes only from the versioned price list managed by Velorex admins. A model
+  without a price is shown as **unpriced** and counts $0 (with a visible warning) until a
+  price is added — cost is never estimated ad hoc. Local development seeds clearly labelled
+  demo prices.
 - **A10** Tokens/tasks "today" are computed from task counters (one row per task), not by
-  scanning raw events; full daily aggregates (`UsageDaily`) arrive in Phase 6.
+  scanning raw events; cost and the Costs & Usage page read the `UsageDaily` aggregates.
 - **A5** Onboarding steps 2–5 (departments, connect agent, invite team) land with
   the phases that own those features; the checklist reflects real state.

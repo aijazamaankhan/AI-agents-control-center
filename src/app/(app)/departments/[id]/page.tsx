@@ -20,6 +20,8 @@ import { listAgents } from "@/features/agents/server/agent-service";
 import { todayStats } from "@/features/events/server/activity";
 import { getOrganization } from "@/features/organizations/server/organization-service";
 import { formatTokens } from "@/features/workforce/format";
+import { formatUsd } from "@/features/usage/pricing";
+import { usageToday } from "@/features/usage/server/usage-service";
 import { KpiCard } from "@/features/dashboard/components/kpi-card";
 import { DeleteDepartment } from "@/features/departments/components/delete-department";
 import { EditDepartmentForm } from "@/features/departments/components/department-form";
@@ -49,9 +51,12 @@ export default async function DepartmentPage({ params }: { params: Promise<{ id:
   });
 
   const org = await getOrganization(ctx);
-  const [agents, stats] = await Promise.all([
+  const [agents, stats, cost] = await Promise.all([
     listAgents(ctx, { departmentId: dep.id }),
     todayStats(ctx, org.timezone, { departmentId: dep.id }),
+    can(ctx.role, "costs:read")
+      ? usageToday(ctx, org.timezone, { departmentId: dep.id })
+      : Promise.resolve(null),
   ]);
   const working = agents.filter((a) => a.status === "WORKING").length;
   const metrics = [
@@ -92,10 +97,10 @@ export default async function DepartmentPage({ params }: { params: Promise<{ id:
     },
     {
       label: "AI cost",
-      value: "$0.00",
+      value: cost ? formatUsd(cost.cost) : "—",
       icon: CircleDollarSign,
       accent: "var(--color-lime)",
-      caption: "Pricing arrives in Phase 6",
+      caption: cost ? "Today" : "Owners, admins & managers",
     },
   ];
   const canConnect = can(ctx.role, "agents:manage");

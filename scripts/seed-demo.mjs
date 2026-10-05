@@ -120,6 +120,57 @@ const SMALL_AGENTS = [
   ["QA Inspector", "Quality", "Google", "Gemini Flash", "Flags defects in inspection reports."],
 ];
 
+// Local demo prices (USD per 1M tokens: input, output, cached) for the demo agents' models, so
+// costs show up locally. Labelled as demo values — Velorex admins manage real prices in
+// Admin → Pricing. Only added when the price list is empty.
+const DEMO_PRICES = [
+  ["Anthropic", "Claude Sonnet", "3", "15", "0.3"],
+  ["Anthropic", "Claude Haiku", "1", "5", "0.1"],
+  ["OpenAI", "GPT-5", "1.25", "10", "0.125"],
+  ["OpenAI", "GPT-5 mini", "0.25", "2", "0.025"],
+  ["Google", "Gemini Flash", "0.3", "2.5", "0.03"],
+];
+const normalizePart = (v) =>
+  (v ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_]+/g, "-") || "unknown";
+const priceKeyOf = (provider, model) => `${normalizePart(provider)}/${normalizePart(model)}`;
+
+/** Adds the demo prices to an empty price list and prices any unpriced calls with them. */
+async function ensureDemoPrices() {
+  const { rows } = await client.query("SELECT count(*)::int AS n FROM model_prices");
+  if (rows[0].n > 0) return false;
+  for (const [provider, model, input, output, cached] of DEMO_PRICES) {
+    const priceId = id("prc");
+    const key = priceKeyOf(provider, model);
+    await client.query(
+      `INSERT INTO model_prices (id, price_key, provider, model, version, input_per_mtok,
+         output_per_mtok, cached_per_mtok, effective_from, note)
+       VALUES ($1, $2, $3, $4, 1, $5, $6, $7, '2020-01-01T00:00:00Z',
+         'Local demo price — not an official list price; update in Admin → Pricing')`,
+      [priceId, key, provider, model, input, output, cached],
+    );
+    await client.query(
+      `UPDATE cost_records SET
+         cost_usd = (input_tokens::numeric * $2 + output_tokens::numeric * $3
+                     + cached_tokens::numeric * $4) / 1000000,
+         price_id = $5, pricing_version = 1
+       WHERE price_key = $1 AND pricing_version IS NULL`,
+      [key, input, output, cached, priceId],
+    );
+  }
+  await client.query(
+    `UPDATE usage_daily u SET cost_usd = s.cost, unpriced_calls = s.unpriced
+     FROM (SELECT organization_id, day, agent_id, department_id, price_key, sum(cost_usd) AS cost,
+                  (count(*) FILTER (WHERE pricing_version IS NULL))::int AS unpriced
+           FROM cost_records GROUP BY organization_id, day, agent_id, department_id, price_key) s
+     WHERE u.organization_id = s.organization_id AND u.day = s.day AND u.agent_id = s.agent_id
+       AND u.department_id = s.department_id AND u.price_key = s.price_key`,
+  );
+  return true;
+}
+
 const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
 let firstKey = null;
 
@@ -309,6 +360,7 @@ try {
     for (const company of ACCOUNTS.companies) {
       changed = (await ensureCompany(company)) || changed;
     }
+    if (await ensureDemoPrices()) console.log("✔ Demo model prices added (Admin → Pricing)");
     await client.query("COMMIT");
     saveDemoKey();
     if (changed || RESET || !QUIET) {

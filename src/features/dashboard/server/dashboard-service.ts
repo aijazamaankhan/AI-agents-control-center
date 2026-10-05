@@ -10,6 +10,8 @@ import type { AgentRuntime, Provider, WorkforceDepartment } from "@/features/wor
 import { db } from "@/lib/db/client";
 import { activeTaskNames, recentActivity, todayStats } from "@/features/events/server/activity";
 import { toActivityEvent } from "@/features/workforce/live";
+import { usageToday } from "@/features/usage/server/usage-service";
+import { can } from "@/lib/security/permissions";
 
 export interface ChecklistItem {
   key: string;
@@ -131,13 +133,15 @@ export async function getWorkforceSnapshot(ctx: OrgContext) {
 
 export async function getDashboardOverview(ctx: OrgContext) {
   const organization = await getOrganization(ctx);
-  const [checklist, counts, snapshot, today, recent] = await Promise.all([
+  const [checklist, counts, snapshot, stats, cost, recent] = await Promise.all([
     getOnboardingChecklist(ctx),
     agentStatusCounts(ctx),
     getWorkforceSnapshot(ctx),
     todayStats(ctx, organization.timezone),
+    can(ctx.role, "costs:read") ? usageToday(ctx, organization.timezone) : Promise.resolve(null),
     recentActivity(ctx, { limit: 20 }),
   ]);
+  const today = { ...stats, cost };
   return {
     organization,
     checklist,

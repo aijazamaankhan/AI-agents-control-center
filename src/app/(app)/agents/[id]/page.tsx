@@ -41,6 +41,10 @@ import {
 } from "@/features/events/server/activity";
 import { getOrganization } from "@/features/organizations/server/organization-service";
 import { formatTokens } from "@/features/workforce/format";
+import { UsageBreakdown } from "@/features/usage/components/usage-breakdown";
+import { UsageChart } from "@/features/usage/components/usage-chart";
+import { formatUsd } from "@/features/usage/pricing";
+import { getUsageReport, usageToday } from "@/features/usage/server/usage-service";
 import { listDepartments } from "@/features/departments/server/department-service";
 import { AppError } from "@/lib/api/errors";
 import { requireOrgContext } from "@/lib/auth/guards";
@@ -84,7 +88,8 @@ export default async function AgentPage({
   const departments = tab === "settings" ? await listDepartments(ctx) : [];
   const activeKey = agent.apiKeys[0];
   const org = await getOrganization(ctx);
-  const [stats, latency, tasks, activity, healthMap] = await Promise.all([
+  const canCost = can(ctx.role, "costs:read");
+  const [stats, latency, tasks, activity, healthMap, costToday, usage] = await Promise.all([
     todayStats(ctx, org.timezone, { agentId: agent.id }),
     avgLlmLatencyToday(ctx, agent.id, org.timezone),
     tab === "tasks" ? listTasks(ctx, { agentId: agent.id, limit: 100 }) : Promise.resolve([]),
@@ -92,6 +97,10 @@ export default async function AgentPage({
       ? recentActivity(ctx, { agentId: agent.id, limit: 100 })
       : Promise.resolve([]),
     agentHealthMap(ctx),
+    canCost ? usageToday(ctx, org.timezone, { agentId: agent.id }) : Promise.resolve(null),
+    tab === "usage" && canCost
+      ? getUsageReport(ctx, org.timezone, "30d", { agentId: agent.id })
+      : Promise.resolve(null),
   ]);
 
   return (
@@ -206,10 +215,16 @@ export default async function AgentPage({
             />
             <KpiCard
               label="Cost today"
-              value="$0.00"
+              value={costToday ? formatUsd(costToday.cost) : "—"}
               icon={CircleDollarSign}
               accent="var(--color-lime)"
-              caption="Pricing arrives in Phase 6"
+              caption={
+                !costToday
+                  ? "Owners, admins & managers"
+                  : costToday.unpricedCalls
+                    ? `${costToday.unpricedCalls} unpriced calls`
+                    : `${costToday.llmCalls} LLM calls`
+              }
             />
             <KpiCard
               label="Last active"
@@ -356,9 +371,27 @@ export default async function AgentPage({
               caption="Today"
             />
           </section>
-          <p className="text-sm text-muted">
-            Cost per call, charts and history arrive with the pricing system in Phase 6.
-          </p>
+          {usage ? (
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+              <Card className="rounded-[18px] p-4">
+                <h2 className="mb-4 text-sm font-semibold text-foreground">
+                  Cost, last 30 days · {formatUsd(usage.totals.cost)} ·{" "}
+                  {formatTokens(usage.totals.tokens)} tokens
+                </h2>
+                <UsageChart series={usage.series} metric="cost" />
+              </Card>
+              <UsageBreakdown
+                title="By model (30 days)"
+                rows={usage.models}
+                totalCost={usage.totals.cost}
+                totalTokens={usage.totals.tokens}
+              />
+            </div>
+          ) : (
+            <p className="text-sm text-muted">
+              Cost history is visible to owners, admins and managers.
+            </p>
+          )}
         </div>
       ) : null}
 

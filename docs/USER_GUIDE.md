@@ -92,6 +92,18 @@ await task.complete({ result: { leadsFound: 47 } });
 Or call the HTTP API from any language — see `API.md` (`POST /api/agent-events` with
 `Authorization: Bearer <key>` and an `Idempotency-Key` header).
 
+### 6b. Costs & Usage
+
+**Costs & Usage** (sidebar; owners, admins and managers) shows AI spend and tokens for the
+last 7, 30 or 90 days: total cost with change vs the previous period, tokens (input /
+output / cached), LLM calls, a daily chart (cost or tokens; "Show data table" for exact
+numbers) and rankings by department, agent and model. Agent pages show cost today and a
+30-day chart under **Usage & costs**; the dashboard and department pages show cost today.
+
+Costs use Velorex's versioned **price list** (USD per 1M tokens). If a model has no price
+yet its calls are counted as **unpriced** ($0, with a warning) and are priced automatically
+once a price is added. Changing a price never rewrites past costs.
+
 ### 7. Website enquiries & demo requests
 
 The landing page's **Book Demo** button and the footer's **Velorex Studio — IT Services**
@@ -116,6 +128,10 @@ or open the account menu → **Velorex admin panel**. Local demo admin: `admin@v
 - **Users** — **Sign out everywhere**, **Reset password** (a one-time temporary password is
   shown to you — share it securely), **Suspend / Reactivate**.
 - **Enquiries** — website project requests and demo requests; **Mark handled**.
+- **Pricing** — the model price list used for every customer's costs. **Add price version**
+  (provider, model, input/output/cached $ per 1M tokens, optional effective date). Models
+  agents use without a price are listed at the top — click one to prefill the form. Local
+  development starts with demo prices (marked as such) — replace them with real list prices.
 - **Audit log** — every security-relevant action, including all admin actions.
 
 Passwords and agent secrets can never be viewed by anyone (they're hashed/encrypted) —

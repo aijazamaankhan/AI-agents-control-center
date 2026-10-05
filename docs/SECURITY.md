@@ -48,6 +48,7 @@ convenience but is never the enforcement point.
 | `budgets:manage`                              |   ✓   |       |         |        |        |
 | `approvals:decide`                            |   ✓   |   ✓   |   ✓¹    |   ✓²   |        |
 | `analytics:read`                              |   ✓   |   ✓   |   ✓¹    |        |        |
+| `costs:read` (Costs & Usage page, cost KPIs)  |   ✓   |   ✓   |    ✓    |        |        |
 | `audit:read`                                  |   ✓   |   ✓   |         |        |        |
 
 ¹ scoped to assigned departments (Phase 2+). ² only when explicitly granted.

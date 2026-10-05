@@ -22,7 +22,7 @@ after merge).
 - **Secrets**: never stored in plaintext. Agent credentials: AES-256-GCM envelope
   (`ENCRYPTION_KEY`). Session tokens and API keys: stored as SHA-256 hashes.
 
-## Implemented models (Phases 1–4)
+## Implemented models (Phases 1–6)
 
 | Model          | Table           | Purpose                                                                                     |
 | -------------- | --------------- | ------------------------------------------------------------------------------------------- |
@@ -47,21 +47,28 @@ before an org exists); all org-scoped actions set it.
 | `Task` | `tasks` | Phase 4: agent, department snapshot, status, timing, token counters (incremented per event), call counts, small `result`, `error` |
 | `Execution` | `executions` | Phase 4: one run of a task |
 | `ExecutionEvent` | `execution_events` | Phase 4: **immutable**; unique `(organization_id, idempotency_key)` + `payload_hash`; type, tokens, latency, tool, short `summary`, redacted `metadata` |
+| `ModelPrice` | `model_prices` | Phase 6: platform-wide price list (USD per 1M input/output/cached tokens), `price_key` (normalised `provider/model`), `version` (unique per key), `effective_from`, `note`. Never edited in place — a change adds the next version |
+| `CostRecord` | `cost_records` | Phase 6: one per LLM-call event (unique `event_id`), org-local `day`, tokens, exact `cost_usd` (numeric 24,12), `price_id` + **`pricing_version`** (null = unpriced, cost 0) |
+| `UsageDaily` | `usage_daily` | Phase 6: aggregates keyed `(organization_id, day, agent_id, department_id, price_key)`: calls, unpriced calls, input/output/cached tokens, cost. Incremented with `INSERT … ON CONFLICT` in the event's transaction |
+
+**Cost rules (Phase 6).** Cost = input × input price + output × output price + cached ×
+cached price (per 1M tokens), computed exactly (integer micro-dollars in code, `numeric` in
+SQL). A call is priced with the version whose `effective_from` is the latest ≤ the call's
+time. Adding a price only fills in **unpriced** records inside its window and recomputes
+their daily rows; records already priced keep their version forever (auditable history).
+The migration backfilled cost records and daily rows for all earlier LLM calls as unpriced.
+Usage rows keep no FK to agents/departments so history survives deletes ("Deleted agent").
 
 ## Planned models (later phases — design fixed, not yet migrated)
 
-| Model                  | Phase | Notes                                                                             |
-| ---------------------- | ----- | --------------------------------------------------------------------------------- |
-| `ToolCall`             | 4     | tool name, duration, status (arguments not stored by default)                     |
-| `ModelUsage`           | 6     | provider, model, input/output/cached tokens, latency                              |
-| `Pricing`              | 6     | provider, model, input/output/cached price per 1M tokens, effective_from, version |
-| `CostRecord`           | 6     | per event cost, **`pricing_version`**                                             |
-| `UsageDaily`           | 6     | aggregates by (org, date, scope: org/department/agent/model)                      |
-| `Approval`             | 7     | requested action, risk, status, decided_by, decided_at                            |
-| `Budget`               | 9     | period, amount, thresholds, channels                                              |
-| `Alert`                | 9     | type, severity, status, resource                                                  |
-| `Integration`          | 9     | type, encrypted config                                                            |
-| `Invitation`           | 2/3   | email, role, token hash, expiry (onboarding step 4)                               |
-| `OrganizationSettings` | 9     | retention, prompt/argument capture opt-ins                                        |
+| Model                  | Phase | Notes                                                         |
+| ---------------------- | ----- | ------------------------------------------------------------- |
+| `ToolCall`             | 4     | tool name, duration, status (arguments not stored by default) |
+| `Approval`             | 7     | requested action, risk, status, decided_by, decided_at        |
+| `Budget`               | 9     | period, amount, thresholds, channels                          |
+| `Alert`                | 9     | type, severity, status, resource                              |
+| `Integration`          | 9     | type, encrypted config                                        |
+| `Invitation`           | 2/3   | email, role, token hash, expiry (onboarding step 4)           |
+| `OrganizationSettings` | 9     | retention, prompt/argument capture opt-ins                    |
 
 Any new table must be added here first.

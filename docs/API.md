@@ -45,18 +45,18 @@ same-origin `Origin` header (CSRF) — otherwise `403 FORBIDDEN`. Writes require
 
 ## Planned
 
-| Method & path                                                          | Phase | Auth          | Notes                                                                  |
-| ---------------------------------------------------------------------- | ----- | ------------- | ---------------------------------------------------------------------- |
-| `GET/POST /api/v1/agents`, `GET/PATCH/DELETE /api/v1/agents/:id`       | 3     | session       |                                                                        |
-| `POST /api/v1/agents/:id/test-connection`                              | 3     | session       |                                                                        |
-| `POST /api/agent-events`                                               | 4     | agent API key | requires `Idempotency-Key`; duplicate → `200` with original `event_id` |
-| `POST /api/agent/heartbeat`                                            | 4     | agent API key | `agent_id`, `timestamp`, `status`, `current_task_id`                   |
-| `GET /api/v1/activity/stream`                                          | 5     | session       | Server-Sent Events                                                     |
-| `GET /api/v1/tasks`, `GET /api/v1/tasks/:id`                           | 5     | session       | filters: department, agent, status, provider, model, date              |
-| `GET /api/v1/usage`, `GET /api/v1/costs`                               | 6     | session       | period: today, 7d, 30d, 90d, custom                                    |
-| `GET /api/v1/approvals`, `POST /api/v1/approvals/:id/{approve,reject}` | 7     | session       | audited                                                                |
-| `GET /api/v1/analytics/*` (+ `?format=csv`)                            | 8     | session       |                                                                        |
-| `GET/POST /api/v1/budgets`, `GET /api/v1/alerts`                       | 9     | session       |                                                                        |
+| Method & path                                                          | Phase | Auth          | Notes                                                                   |
+| ---------------------------------------------------------------------- | ----- | ------------- | ----------------------------------------------------------------------- |
+| `GET/POST /api/v1/agents`, `GET/PATCH/DELETE /api/v1/agents/:id`       | 3     | session       |                                                                         |
+| `POST /api/v1/agents/:id/test-connection`                              | 3     | session       |                                                                         |
+| `POST /api/agent-events`                                               | 4     | agent API key | requires `Idempotency-Key`; duplicate → `200` with original `event_id`  |
+| `POST /api/agent/heartbeat`                                            | 4     | agent API key | `agent_id`, `timestamp`, `status`, `current_task_id`                    |
+| `GET /api/v1/activity/stream`                                          | 5     | session       | Server-Sent Events                                                      |
+| `GET /api/v1/tasks`, `GET /api/v1/tasks/:id`                           | 5     | session       | filters: department, agent, status, provider, model, date               |
+| `GET /api/v1/usage` — implemented                                      | 6     | session       | `period=7d\|30d\|90d` (default 30d); `costs:read` (owner/admin/manager) |
+| `GET /api/v1/approvals`, `POST /api/v1/approvals/:id/{approve,reject}` | 7     | session       | audited                                                                 |
+| `GET /api/v1/analytics/*` (+ `?format=csv`)                            | 8     | session       |                                                                         |
+| `GET/POST /api/v1/budgets`, `GET /api/v1/alerts`                       | 9     | session       |                                                                         |
 
 ### `POST /api/agent-events` — implemented (Phase 4)
 
@@ -74,6 +74,10 @@ agent and department are derived from it, never from the body), `Idempotency-Key
 | `task.failed`        | `task_id`, `error?`                                                                               |
 | `task.cancelled`     | `task_id`, `reason?`                                                                              |
 | `log`                | `message`, `level?`                                                                               |
+
+Token semantics: `input_tokens` = uncached input tokens, `cached_tokens` = input tokens
+served from the provider's prompt cache (billed at the cached price), `output_tokens` =
+generated tokens. Each `llm.call` is costed from the versioned price list (Phase 6).
 
 Example:
 
@@ -113,3 +117,11 @@ Session-authenticated Server-Sent Events for the signed-in organization:
 `event: activity` (one per new execution event, with agent/department names, summary,
 tokens) and `event: status` (`{ agentId: status }` for agents whose status changed).
 Polls the database every 2 s; connections recycle every 5 min (EventSource reconnects).
+
+### `GET /api/v1/usage` — implemented (Phase 6)
+
+Session auth, `costs:read`. Query `period=7d|30d|90d` (default `30d`). Returns
+`{ data: { period, days, from, to, totals, previous, series[], departments[], agents[], models[] } }`
+where totals/rows carry `cost` (USD), `inputTokens`, `outputTokens`, `cachedTokens`,
+`tokens`, `llmCalls`, `unpricedCalls`. Days are in the organization's timezone; `previous`
+is the same-length period before. Read from `usage_daily` aggregates only.

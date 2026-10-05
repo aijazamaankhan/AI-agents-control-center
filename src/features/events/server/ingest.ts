@@ -20,6 +20,7 @@ import {
   summarize,
   TERMINAL,
 } from "../transitions";
+import { recordLlmUsage } from "@/features/usage/server/usage-recorder";
 import { assertSameAgent, type AgentContext } from "./agent-auth";
 
 export interface IngestResult {
@@ -234,6 +235,22 @@ export async function ingestEvent(
         },
         select: { id: true },
       });
+
+      if (input.event_type === "llm.call") {
+        await recordLlmUsage(tx, {
+          eventId: event.id,
+          organizationId: ctx.organizationId,
+          agentId: ctx.agentId,
+          departmentId: ctx.departmentId,
+          taskId,
+          provider: input.provider,
+          model: input.model,
+          occurredAt,
+          inputTokens: input.input_tokens,
+          outputTokens: input.output_tokens,
+          cachedTokens: input.cached_tokens,
+        });
+      }
 
       // Any authenticated event proves the agent is alive.
       const status: AgentStatus = agentStatusAfter(type, await activeCounts(tx, ctx));

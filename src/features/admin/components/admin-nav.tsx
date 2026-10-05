@@ -1,6 +1,13 @@
 "use client";
 
-import { Building2, FileClock, Inbox, LayoutDashboard, Users } from "lucide-react";
+import {
+  Building2,
+  CircleDollarSign,
+  FileClock,
+  Inbox,
+  LayoutDashboard,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -10,6 +17,7 @@ const ITEMS = [
   { href: "/admin/organizations", label: "Customers", icon: Building2 },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/enquiries", label: "Enquiries", icon: Inbox },
+  { href: "/admin/pricing", label: "Pricing", icon: CircleDollarSign },
   { href: "/admin/audit", label: "Audit log", icon: FileClock },
 ];
 

@@ -19,6 +19,8 @@ export const ID_PREFIXES = {
   credential: "cred",
   apiKey: "key",
   capability: "cap",
+  price: "prc",
+  cost: "cst",
 } as const;
 
 export type IdKind = keyof typeof ID_PREFIXES;

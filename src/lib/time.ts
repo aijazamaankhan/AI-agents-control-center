@@ -31,3 +31,24 @@ export function startOfDayInTimeZone(date: Date, timeZone: string): Date {
     return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
   }
 }
+
+/** Calendar date ("YYYY-MM-DD") of an instant in an IANA timezone, as a UTC-midnight Date. */
+export function localDay(date: Date, timeZone: string): Date {
+  let ymd: string;
+  try {
+    ymd = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(date);
+  } catch {
+    ymd = date.toISOString().slice(0, 10);
+  }
+  return new Date(`${ymd}T00:00:00Z`);
+}
+
+/** `day` shifted by `n` calendar days (UTC-midnight Dates, as stored in DATE columns). */
+export function addDays(day: Date, n: number): Date {
+  return new Date(day.getTime() + n * 86_400_000);
+}

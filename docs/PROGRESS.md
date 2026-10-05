@@ -155,24 +155,38 @@ Update this file at the end of every phase.
 - **`npm run update`** pulls the latest code safely; the running version (`v0.1.0 · <commit>`)
   is shown under the sign-in box and in the sidebar.
 
+### Phase 6 — Usage & costs
+
+- Versioned, platform-wide **price list** (`model_prices`; USD per 1M input / output /
+  cached tokens, effective-from, version) managed in **Admin → Pricing**, with a list of
+  models used without a price.
+- Every `llm.call` gets a **cost record** with its `pricing_version`, written in the same
+  transaction as the event (idempotent — a retried event is never costed twice). Exact
+  arithmetic (integer micro-dollars / SQL numeric).
+- **Daily aggregates** (`usage_daily`) per org-local day × agent × department × model,
+  incremented concurrency-safely; the migration backfilled all earlier LLM calls.
+- Unpriced calls count $0 with a visible warning and are priced automatically when a
+  matching price is added; already-priced history never changes.
+- **Costs & Usage** page (7/30/90 days, change vs previous period, daily cost/token chart
+  with data table, by department / agent / model); real cost on the dashboard, agent
+  (cost today + 30-day chart) and department pages; `GET /api/v1/usage`.
+- New permission `costs:read` (owner, admin, manager).
+
 ## 🔜 Next
 
-| Phase | Scope                 | Key deliverables                                                                                                                                                               |
-| ----- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2b    | Department follow-ups | Manager ↔ department assignment (managers see only assigned departments); real department lanes on the workforce map once agents exist                                         |
-| 3     | Agents                | `/agents`, `/agents/new`, connection types, permanent `agt_` IDs, encrypted credentials, capabilities, test connection, agent profile; map switches from sample to real agents |
-| 4     | Event ingestion       | `POST /api/agent-events` (Idempotency-Key), `POST /api/agent/heartbeat`, SDK, tasks/executions/events tables                                                                   |
-| 5     | Live dashboard        | SSE stream feeding the workforce map and activity feed, tasks page, execution trace page                                                                                       |
-| 6     | Usage & cost          | Versioned pricing table, cost records with `pricing_version`, daily aggregates                                                                                                 |
-| 7     | Approvals             | Approval queue, approve/reject (web + mobile), agent permission rules, audit                                                                                                   |
-| 8     | Analytics             | Department / agent / model / provider analytics, CSV export                                                                                                                    |
-| 9     | Alerts & budgets      | Budgets with thresholds, failure/token/cost anomalies, notifications                                                                                                           |
-| 10    | Desktop & mobile      | Tauri desktop app (tray, notifications, approval popups), mobile-first PWA                                                                                                     |
+| Phase | Scope                 | Key deliverables                                                             |
+| ----- | --------------------- | ---------------------------------------------------------------------------- |
+| 2b    | Department follow-ups | Manager ↔ department assignment (managers see only assigned departments)     |
+| 7     | Approvals             | Approval queue, approve/reject (web + mobile), agent permission rules, audit |
+| 8     | Analytics             | Department / agent / model / provider analytics, CSV export                  |
+| 9     | Alerts & budgets      | Budgets with thresholds, failure/token/cost anomalies, notifications         |
+| 10    | Desktop & mobile      | Tauri desktop app (tray, notifications, approval popups), mobile-first PWA   |
 
 ## Known gaps (intentional for now)
 
 - No email verification / password reset (needs an email provider).
 - No organization switcher (users with several orgs use their first).
-- Rate limiter is in-memory (Redis in Phase 4).
+- Rate limiter is in-memory (move to Redis before running several app instances).
 - Managers currently see all departments; per-department assignment is Phase 2b.
-- Global search and notifications are placeholders until Phases 5 and 9.
+- Notifications are a placeholder until Phase 9 (alerts & budgets).
+- Prices are entered by Velorex admins; there is no automatic sync with provider price pages.

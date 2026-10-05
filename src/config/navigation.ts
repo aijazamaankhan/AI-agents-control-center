@@ -31,7 +31,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Workflows", href: "/workflows", icon: Workflow, available: false },
   { label: "Activity", href: "/activity", icon: Activity, available: true },
   { label: "Approvals", href: "/approvals", icon: ShieldCheck, available: false },
-  { label: "Costs & Usage", href: "/costs", icon: CircleDollarSign, available: false },
+  { label: "Costs & Usage", href: "/costs", icon: CircleDollarSign, available: true },
   { label: "Analytics", href: "/analytics", icon: BarChart3, available: false },
   { label: "Integrations", href: "/integrations", icon: Plug, available: false },
   { label: "Team", href: "/team", icon: Users, available: false },

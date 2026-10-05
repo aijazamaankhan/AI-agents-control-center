@@ -109,12 +109,15 @@ const SECTIONS: Section[] = [
   {
     id: "costs",
     icon: CircleDollarSign,
-    title: "Tokens, costs & budgets",
-    status: "soon",
+    title: "Tokens & costs",
+    status: "available",
     body: (
       <p>
-        Input, output and cached tokens are priced from a versioned pricing table, so historical
-        costs stay auditable. Budgets alert you at 50%, 75%, 90% and 100%.
+        Every model call your agents report is priced from a versioned price list (USD per 1M input,
+        output and cached tokens), so historical costs stay auditable when prices change. Calls for
+        a model without a price show as <em>unpriced</em> ($0) until Velorex adds one. Open{" "}
+        <strong>Costs &amp; Usage</strong> for daily spend by department, agent and model. Budgets
+        with alerts arrive in Phase 9.
       </p>
     ),
   },
