@@ -11,7 +11,10 @@ export type AuditAction =
   | "user.login_failed"
   | "user.logout"
   | "organization.created"
-  | "organization.updated";
+  | "organization.updated"
+  | "department.created"
+  | "department.updated"
+  | "department.deleted";
 
 export interface AuditEntry {
   action: AuditAction;

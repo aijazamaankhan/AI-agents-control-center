@@ -3,14 +3,12 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { createOrganizationAction } from "@/features/organizations/actions";
+import { OnboardingSteps } from "@/features/organizations/components/onboarding-steps";
 import { OrganizationForm } from "@/features/organizations/components/organization-form";
 import { countryOptions, timezoneOptions } from "@/features/organizations/constants";
 import { getCurrentOrgContext, requireSession } from "@/lib/auth/guards";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Set up your company" };
-
-const STEPS = ["Create company", "Departments", "Connect agent", "Invite team", "Dashboard"];
 
 export default async function OnboardingPage() {
   const session = await requireSession();
@@ -22,28 +20,7 @@ export default async function OnboardingPage() {
   return (
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col px-4 py-10">
       <Logo />
-      <ol aria-label="Onboarding steps" className="mt-10 flex flex-wrap gap-x-5 gap-y-2">
-        {STEPS.map((label, i) => (
-          <li
-            key={label}
-            aria-current={i === 0 ? "step" : undefined}
-            className={cn(
-              "flex items-center gap-2 text-xs",
-              i === 0 ? "text-foreground" : "text-muted",
-            )}
-          >
-            <span
-              className={cn(
-                "flex size-5 items-center justify-center rounded-full border text-[10px] font-semibold",
-                i === 0 ? "border-primary bg-primary text-background" : "border-border",
-              )}
-            >
-              {i + 1}
-            </span>
-            {label}
-          </li>
-        ))}
-      </ol>
+      <OnboardingSteps current={0} />
 
       <div className="mt-8 rounded-card border border-border bg-surface p-6 sm:p-8">
         <p className="text-xs font-semibold tracking-wider text-primary uppercase">Step 1 of 5</p>

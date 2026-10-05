@@ -29,6 +29,15 @@ Phase 1 (implemented):
   role enforcement on org update.
 - E2E: landing → signup → create company → dashboard → settings → logout → login.
 
+Phase 2 (implemented):
+
+- Unit: department schemas (normalization, dedupe, update semantics), same-origin guard,
+  workforce layout scaling / simulation determinism / visuals.
+- Integration: department CRUD + audit, case-insensitive uniqueness per org, bulk
+  onboarding create, RBAC, cross-tenant isolation (404 on foreign ids).
+- E2E: onboarding step 2, department create/duplicate/rename/delete, `/api/v1/departments`
+  GET and forged-origin POST → 403, workforce map drill-down + pause, help page.
+
 Planned (later phases): cost calculation, token aggregation, pricing lookup,
 status transitions, event ingestion idempotency, approval flow, budgets, and the
 full 13-step E2E journey in the master spec.

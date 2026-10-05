@@ -8,10 +8,11 @@
    `/onboarding`.
 3. **Step 1 — Create company** (`/onboarding`) — name, industry, size, country,
    timezone (defaults to browser timezone). Creates org + OWNER membership, sets
-   it active → `/dashboard`. _(Phase 1)_
+   it active → `/onboarding/departments`. _(Phase 1)_
 4. **Step 2 — Departments** — recommended defaults (Marketing, Sales, Customer
    Support, Finance, HR, Operations, Engineering, Analytics); keep, remove,
-   rename, add custom. _(Phase 2)_
+   rename, add custom; "Skip for now". Shown to OWNER/ADMIN of an org with no
+   departments yet. _(Phase 2 — implemented)_
 5. **Step 3 — Connect first agent** — `[+ Connect Agent]` → `/agents/new`. _(Phase 3)_
 6. **Step 4 — Invite team** — email invitations. _(Phase 2/3)_
 7. **Step 5 — Dashboard** with checklist reflecting real state:
@@ -47,6 +48,15 @@ for any number of departments (themed side-scroller, ‹ › buttons); 4 agents 
 (or onboarding copy when empty), onboarding checklist, workforce empty state
 ("Your AI workforce is empty." → **[Connect Your First Agent]**, disabled until
 Phase 3) and "Agent activity will appear here when your agents start working."
+
+## Departments (Phase 2)
+
+- `/departments` — grid of department cards (derived accent + icon, description,
+  agent count). OWNER/ADMIN see an inline "Add department" form; others see a
+  read-only note. Empty state: "Create your first department."
+- `/departments/[id]` — header, metric widgets, Agents and Activity sections (empty
+  states until Phase 3), and for OWNER/ADMIN a "Manage department" card with
+  rename/description and a two-step inline delete. Unknown or other-tenant id → 404.
 
 ## Settings
 

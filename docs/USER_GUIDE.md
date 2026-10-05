@@ -46,8 +46,9 @@ tokens, cost, tools and recent events. Use **⏸** to pause all motion.
 ### 4. Departments
 
 Owners and admins can create, rename and delete departments on **Departments**.
-Names must be unique within your organization. A department that still has agents
-can't be deleted. Every change is written to the audit log.
+Names must be unique within your organization (case-insensitive). Delete asks for
+confirmation. Once agents exist (Phase 3), a department that still has agents can't be
+deleted. Every change is written to the audit log.
 
 ### 5. Settings & roles
 
@@ -84,6 +85,11 @@ npm install                                 # also generates the Prisma client
 npm run db:deploy                           # apply migrations
 npm run dev                                 # http://localhost:3000
 ```
+
+**Open in VS Code:** `code Z:\agentos-platform` (or _File → Open Folder…_). Accept the
+"recommended extensions" prompt (ESLint, Prettier, Tailwind CSS, Prisma, Vitest,
+Playwright) — the workspace formats on save and uses the project's TypeScript.
+Run commands in the integrated terminal (`` Ctrl+` ``).
 
 **Database on Windows** — pick one:
 

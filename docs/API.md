@@ -23,14 +23,30 @@ Public liveness/readiness probe.
 
 Returns `503` with `"status": "degraded"` when the database check fails.
 
-Web mutations in Phase 1 (signup, login, logout, create org, update org) are
-**server actions**, not public JSON endpoints.
+Web mutations (signup, login, logout, organization, departments) are **server actions**.
+
+### Departments (Phase 2) — `/api/v1/departments`
+
+Session-cookie authenticated (for the web/desktop/mobile clients). Mutations require a
+same-origin `Origin` header (CSRF) — otherwise `403 FORBIDDEN`. Writes require
+`departments:manage` (OWNER, ADMIN). Another organization's id returns `404`.
+
+| Method & path                    | Body                                     | Success                      |
+| -------------------------------- | ---------------------------------------- | ---------------------------- |
+| `GET /api/v1/departments`        | —                                        | `200 { data: Department[] }` |
+| `POST /api/v1/departments`       | `{ name, description? }`                 | `201 { data: Department }`   |
+| `GET /api/v1/departments/:id`    | —                                        | `200 { data: Department }`   |
+| `PATCH /api/v1/departments/:id`  | `{ name?, description? }` (at least one) | `200 { data: Department }`   |
+| `DELETE /api/v1/departments/:id` | —                                        | `204`                        |
+
+`Department = { id, name, description, createdAt, updatedAt }`. Duplicate name
+(case-insensitive) → `409 CONFLICT`; invalid body → `422 VALIDATION_ERROR` with
+`details.fieldErrors`.
 
 ## Planned
 
 | Method & path                                                          | Phase | Auth          | Notes                                                                  |
 | ---------------------------------------------------------------------- | ----- | ------------- | ---------------------------------------------------------------------- |
-| `GET/POST /api/v1/departments`, `PATCH/DELETE /api/v1/departments/:id` | 2     | session       | for desktop/mobile clients                                             |
 | `GET/POST /api/v1/agents`, `GET/PATCH/DELETE /api/v1/agents/:id`       | 3     | session       |                                                                        |
 | `POST /api/v1/agents/:id/test-connection`                              | 3     | session       |                                                                        |
 | `POST /api/agent-events`                                               | 4     | agent API key | requires `Idempotency-Key`; duplicate → `200` with original `event_id` |

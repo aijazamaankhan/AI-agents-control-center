@@ -22,15 +22,16 @@ after merge).
 - **Secrets**: never stored in plaintext. Agent credentials: AES-256-GCM envelope
   (`ENCRYPTION_KEY`). Session tokens and API keys: stored as SHA-256 hashes.
 
-## Phase 1 models (implemented)
+## Implemented models (Phases 1–2)
 
-| Model          | Table           | Purpose                                                                    |
-| -------------- | --------------- | -------------------------------------------------------------------------- |
-| `User`         | `users`         | Global identity (email unique, scrypt password hash)                       |
-| `Organization` | `organizations` | Tenant: name, slug, industry, size, country, timezone                      |
-| `Membership`   | `memberships`   | User ↔ Organization with `role`; unique `(organization_id, user_id)`       |
-| `Session`      | `sessions`      | Server-side session; `token_hash` unique; `active_organization_id`; expiry |
-| `AuditLog`     | `audit_logs`    | Immutable audit trail (actor, org, action, resource, metadata, ip, ua)     |
+| Model          | Table           | Purpose                                                                                     |
+| -------------- | --------------- | ------------------------------------------------------------------------------------------- |
+| `User`         | `users`         | Global identity (email unique, scrypt password hash)                                        |
+| `Organization` | `organizations` | Tenant: name, slug, industry, size, country, timezone                                       |
+| `Membership`   | `memberships`   | User ↔ Organization with `role`; unique `(organization_id, user_id)`                        |
+| `Session`      | `sessions`      | Server-side session; `token_hash` unique; `active_organization_id`; expiry                  |
+| `AuditLog`     | `audit_logs`    | Immutable audit trail (actor, org, action, resource, metadata, ip, ua)                      |
+| `Department`   | `departments`   | Phase 2: `organization_id`, `name`, `name_key` (lower-cased, unique per org), `description` |
 
 `Role` enum: `OWNER | ADMIN | MANAGER | MEMBER | VIEWER`.
 
@@ -41,7 +42,6 @@ before an org exists); all org-scoped actions set it.
 
 | Model                  | Phase | Notes                                                                             |
 | ---------------------- | ----- | --------------------------------------------------------------------------------- |
-| `Department`           | 2     | `organization_id`, name unique per org                                            |
 | `Agent`                | 3     | `agt_` id, department, provider, model, connection type, status, last heartbeat   |
 | `AgentCredential`      | 3     | encrypted secret, key version, last 4 chars for display                           |
 | `AgentCapability`      | 3     | capability key, allowed / denied / approval-required                              |

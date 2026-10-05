@@ -88,6 +88,15 @@ master specification and summarized per phase in `UX_FLOWS.md`, `API.md`,
 - [x] `GET /api/health` (liveness + DB check).
 - [x] Unit, integration (tenant isolation) and E2E tests.
 
+## 6b. Phase 2 acceptance
+
+- [x] Onboarding step 2 with recommended departments (keep / rename / remove / add / skip).
+- [x] Department CRUD (UI + `/api/v1/departments`), case-insensitive unique names.
+- [x] OWNER/ADMIN manage; all members read; enforced server-side.
+- [x] Department page skeleton (metrics, agents, activity) with empty states.
+- [x] Audit log for department changes; checklist reflects real state.
+- [x] Unit, integration (incl. cross-tenant) and E2E tests.
+
 ## 7. Assumptions (documented per "do not guess" rule)
 
 - **A1** _Book Demo_ links to a `mailto:` placeholder until a sales flow exists.

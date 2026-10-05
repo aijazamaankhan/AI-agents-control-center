@@ -50,6 +50,7 @@ model Organization {
   memberships Membership[]
   sessions    Session[]
   auditLogs   AuditLog[]
+  departments Department[]
 
   @@map("organizations")
 }
@@ -87,6 +88,23 @@ model Session {
   @@index([userId])
   @@index([expiresAt])
   @@map("sessions")
+}
+
+model Department {
+  id             String   @id
+  organizationId String   @map("organization_id")
+  name           String
+  /// Lower-cased, whitespace-collapsed name: enforces case-insensitive uniqueness per org.
+  nameKey        String   @map("name_key")
+  description    String   @default("")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, nameKey])
+  @@index([organizationId, createdAt])
+  @@map("departments")
 }
 
 // Immutable. organization_id is null only for pre-tenant events (signup/login).

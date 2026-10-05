@@ -32,6 +32,13 @@ test("signup → create company → dashboard → settings → sign out → sign
   await page.getByLabel("Timezone").selectOption("UTC");
   await page.getByRole("button", { name: "Create company" }).click();
 
+  // Step 2: departments — keep defaults, remove one, add a custom one.
+  await expect(page).toHaveURL(/\/onboarding\/departments$/);
+  await page.getByRole("button", { name: "Remove Analytics" }).click();
+  await page.getByLabel("Add a custom department").fill("Inventory");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.getByRole("button", { name: "Create 8 departments" }).click();
+
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(
     page.getByRole("heading", { name: /Good (morning|afternoon|evening), Aijaz/ }),
@@ -48,6 +55,44 @@ test("signup → create company → dashboard → settings → sign out → sign
   await expect(map.getByText("Execution trace")).toBeVisible();
   await map.getByRole("button", { name: "Pause live activity" }).click();
   await expect(map.getByRole("button", { name: "Resume live activity" })).toBeVisible();
+
+  // Departments CRUD.
+  await page.goto("/departments");
+  const list = page.getByRole("list", { name: "Departments" });
+  await expect(list.getByRole("listitem")).toHaveCount(8);
+  await expect(list.getByText("Inventory")).toBeVisible();
+  await expect(list.getByText("Analytics")).toHaveCount(0);
+  await page.getByLabel("Department name").fill("Legal");
+  await page.getByRole("button", { name: "Add department" }).click();
+  await expect(page.getByText("Legal created.")).toBeVisible();
+  await page.getByLabel("Department name").fill("legal");
+  await page.getByRole("button", { name: "Add department" }).click();
+  await expect(page.getByText("A department with this name already exists.")).toBeVisible();
+
+  await list.getByRole("link", { name: /Legal/ }).click();
+  await expect(page.getByRole("heading", { name: "Legal", level: 1 })).toBeVisible();
+  await expect(page.getByText("No agents in Legal yet.")).toBeVisible();
+  await page.getByLabel("Name", { exact: true }).fill("Legal & Compliance");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByText("Department saved.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Legal & Compliance", level: 1 })).toBeVisible();
+  await page.getByRole("button", { name: "Delete department" }).click();
+  await page.getByRole("button", { name: "Delete department" }).click();
+  await expect(page).toHaveURL(/\/departments$/);
+  await expect(list.getByRole("listitem")).toHaveCount(8);
+
+  // JSON API for desktop/mobile clients: session-authenticated, CSRF-protected.
+  const api = await page.request.get("/api/v1/departments");
+  expect(api.status()).toBe(200);
+  expect((await api.json()).data).toHaveLength(8);
+  const forged = await page.request.post("/api/v1/departments", {
+    data: { name: "Forged" },
+    headers: { origin: "https://evil.example" },
+  });
+  expect(forged.status()).toBe(403);
+  expect(await forged.json()).toEqual({
+    error: { code: "FORBIDDEN", message: "Cross-site request blocked." },
+  });
 
   await page.goto("/help");
   await expect(page.getByRole("heading", { name: "Reading the workforce map" })).toBeVisible();

@@ -1,0 +1,2 @@
+# Keep LF line endings on Windows checkouts (Prettier/ESLint expect LF).
+* text=auto eol=lf

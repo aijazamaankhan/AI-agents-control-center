@@ -65,8 +65,9 @@ convenience but is never the enforcement point.
 ## 5. CSRF
 
 - Server actions: Next.js enforces `Origin` == host for action POSTs.
-- Cookie-authenticated route handlers that mutate state call
-  `assertSameOrigin(request)`.
+- Cookie-authenticated route handlers that mutate state call `assertSameOrigin(request)` (`src/lib/security/origin.ts`): the `Origin` header
+  must equal the request origin or `NEXT_PUBLIC_APP_URL`; missing/foreign → `403`. The
+  Tauri desktop app will use bearer tokens instead (Phase 10).
 - Agent APIs (Phase 4) authenticate with agent API keys in headers, not cookies.
 
 ## 6. Agent APIs (Phase 4)
@@ -93,7 +94,8 @@ Set in `next.config.ts` for all routes: `Content-Security-Policy` (production),
 
 `recordAudit()` writes immutable `audit_logs` rows. Phase 1 actions:
 `user.signup`, `user.login`, `user.login_failed`, `user.logout`,
-`organization.created`, `organization.updated`. Metadata never contains
+`organization.created`, `organization.updated`; Phase 2: `department.created`,
+`department.updated` (changed fields, old/new name), `department.deleted`. Metadata never contains
 secrets or passwords.
 
 ## 10. Privacy

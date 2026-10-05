@@ -41,7 +41,7 @@ export async function createOrganizationAction(
   } catch (err) {
     return failure(err, raw);
   }
-  redirect("/dashboard");
+  redirect("/onboarding/departments");
 }
 
 export async function updateOrganizationAction(

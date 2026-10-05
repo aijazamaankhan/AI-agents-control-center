@@ -40,24 +40,41 @@ Update this file at the end of every phase.
 
 ### Phase 2 — Departments
 
-See the Phase 2 section of the PRD; status tracked below once merged.
+- `Department` table (`dep_` IDs), case-insensitive unique names per organization,
+  limit of 200 per organization.
+- Onboarding step 2 (`/onboarding/departments`): recommended defaults (Marketing, Sales,
+  Customer Support, Finance, HR, Operations, Engineering, Analytics) — keep, rename,
+  remove or add custom; "Skip for now".
+- `/departments`: department grid with derived colour/icon, inline "Add department".
+- `/departments/[id]`: header, metrics (real zeros until agents exist), agents and
+  activity sections, rename/description edit and two-step delete for OWNER/ADMIN.
+- JSON API for desktop/mobile clients: `GET/POST /api/v1/departments`,
+  `GET/PATCH/DELETE /api/v1/departments/:id` (session auth + same-origin CSRF check).
+- Server-side RBAC (`departments:manage` = OWNER/ADMIN; everyone in the org can read),
+  tenant-scoped lookups (another org's id → 404), audit entries for
+  created/updated/deleted. Dashboard checklist reflects real department count.
+- Tests: schema unit tests, integration (CRUD, uniqueness, RBAC, cross-tenant isolation,
+  audit), E2E (onboarding step 2, CRUD, API incl. CSRF rejection).
 
 ## 🔜 Next
 
-| Phase | Scope            | Key deliverables                                                                                                                                                               |
-| ----- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 3     | Agents           | `/agents`, `/agents/new`, connection types, permanent `agt_` IDs, encrypted credentials, capabilities, test connection, agent profile; map switches from sample to real agents |
-| 4     | Event ingestion  | `POST /api/agent-events` (Idempotency-Key), `POST /api/agent/heartbeat`, SDK, tasks/executions/events tables                                                                   |
-| 5     | Live dashboard   | SSE stream feeding the workforce map and activity feed, tasks page, execution trace page                                                                                       |
-| 6     | Usage & cost     | Versioned pricing table, cost records with `pricing_version`, daily aggregates                                                                                                 |
-| 7     | Approvals        | Approval queue, approve/reject (web + mobile), agent permission rules, audit                                                                                                   |
-| 8     | Analytics        | Department / agent / model / provider analytics, CSV export                                                                                                                    |
-| 9     | Alerts & budgets | Budgets with thresholds, failure/token/cost anomalies, notifications                                                                                                           |
-| 10    | Desktop & mobile | Tauri desktop app (tray, notifications, approval popups), mobile-first PWA                                                                                                     |
+| Phase | Scope                 | Key deliverables                                                                                                                                                               |
+| ----- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2b    | Department follow-ups | Manager ↔ department assignment (managers see only assigned departments); real department lanes on the workforce map once agents exist                                         |
+| 3     | Agents                | `/agents`, `/agents/new`, connection types, permanent `agt_` IDs, encrypted credentials, capabilities, test connection, agent profile; map switches from sample to real agents |
+| 4     | Event ingestion       | `POST /api/agent-events` (Idempotency-Key), `POST /api/agent/heartbeat`, SDK, tasks/executions/events tables                                                                   |
+| 5     | Live dashboard        | SSE stream feeding the workforce map and activity feed, tasks page, execution trace page                                                                                       |
+| 6     | Usage & cost          | Versioned pricing table, cost records with `pricing_version`, daily aggregates                                                                                                 |
+| 7     | Approvals             | Approval queue, approve/reject (web + mobile), agent permission rules, audit                                                                                                   |
+| 8     | Analytics             | Department / agent / model / provider analytics, CSV export                                                                                                                    |
+| 9     | Alerts & budgets      | Budgets with thresholds, failure/token/cost anomalies, notifications                                                                                                           |
+| 10    | Desktop & mobile      | Tauri desktop app (tray, notifications, approval popups), mobile-first PWA                                                                                                     |
 
 ## Known gaps (intentional for now)
 
 - No email verification / password reset (needs an email provider).
 - No organization switcher (users with several orgs use their first).
 - Rate limiter is in-memory (Redis in Phase 4).
+- Deleting a department will be blocked while agents are assigned once agents exist (Phase 3).
+- Managers currently see all departments; per-department assignment is Phase 2b.
 - Global search and notifications are placeholders until Phases 5 and 9.

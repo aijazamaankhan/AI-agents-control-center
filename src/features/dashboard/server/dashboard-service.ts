@@ -1,5 +1,6 @@
 import "server-only";
 import type { OrgContext } from "@/lib/auth/sessions";
+import { countDepartments } from "@/features/departments/server/department-service";
 import {
   countMembers,
   getOrganization,
@@ -16,10 +17,13 @@ export interface ChecklistItem {
  * built yet are reported as not done — never faked (docs/PRD.md §5).
  */
 export async function getOnboardingChecklist(ctx: OrgContext): Promise<ChecklistItem[]> {
-  const memberCount = await countMembers(ctx);
+  const [memberCount, departmentCount] = await Promise.all([
+    countMembers(ctx),
+    countDepartments(ctx),
+  ]);
   return [
     { key: "company", label: "Company created", done: true },
-    { key: "departments", label: "Departments created", done: false },
+    { key: "departments", label: "Departments created", done: departmentCount > 0 },
     { key: "agent", label: "First agent connected", done: false },
     { key: "team", label: "Invite team", done: memberCount > 1 },
     { key: "budget", label: "Configure budget", done: false },

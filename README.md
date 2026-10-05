@@ -6,7 +6,7 @@ AgentOS is a multi-tenant control plane and observability platform for a company
 agents: connect existing agents, organize them by department, trace every task, and
 account for every token and dollar.
 
-**Status:** Phase 1 (foundation) + UI v2 (live workforce map, "Signal" theme). See
+**Status:** Phase 1 (foundation) + UI v2 (live workforce map, "Signal" theme) + Phase 2 (departments) + Phase 2 (departments). See
 [`docs/PROGRESS.md`](docs/PROGRESS.md). See [`docs/PRD.md`](docs/PRD.md) for the phase plan.
 
 ## Quick start
