@@ -30,7 +30,9 @@
     "demo:agent": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/demo-agent.mjs",
     "seed:demo": "node scripts/seed-demo.mjs",
     "admin:grant": "node scripts/admin-grant.mjs",
-    "update": "node scripts/update.mjs"
+    "update": "node scripts/update.mjs",
+    "desktop": "npm --prefix desktop install --no-audit --no-fund && npm --prefix desktop start",
+    "desktop:build": "npm --prefix desktop install --no-audit --no-fund && npm --prefix desktop run dist"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

@@ -6,7 +6,7 @@
                     AGENTOS CLOUD
         ┌─────────────────┼─────────────────┐
        WEB             DESKTOP            MOBILE
-   (Next.js)       (Tauri shell)       (PWA → Expo)
+   (Next.js)     (Electron shell)      (PWA → Expo)
         └─────────────────┼─────────────────┘
                      API LAYER  (Next.js route handlers + server actions)
                           │
@@ -38,7 +38,7 @@ and mobile are clients of the same API and auth; they never get their own DB.
 | Realtime          | SSE (Phase 5)                                                                             |
 | Jobs / rate limit | Redis (Phase 4+); in-memory limiter in Phase 1 behind the same interface                  |
 | Tests             | Vitest (unit + integration projects), Playwright (E2E)                                    |
-| Desktop           | Tauri (Phase 10)                                                                          |
+| Desktop           | Electron 44 shell in `desktop/` (own package; see desktop/README.md)                      |
 
 ## Layers & directories
 
@@ -117,3 +117,17 @@ Rules:
 | `eslint@10` unsupported by `eslint-plugin-react` (peer `^9.7`) used by `eslint-config-next`                                                           | Pin ESLint **9.x**                                                                |
 | Auth.js v5 is still beta; its credentials provider forces stateless JWT sessions                                                                      | In-house DB-backed sessions (see `SECURITY.md`)                                   |
 | `npm audit` reports advisories in dev tooling only (`braces` via `eslint-config-next`, `deepmerge-ts` via `@prisma/config`); fixes require downgrades | Accepted for dev tooling; re-check on upgrades. Not shipped to production runtime |
+
+## Desktop app (Phase 10a)
+
+`desktop/` is a separate npm package (Electron + electron-builder), so the web app's
+dependencies and Docker image stay unchanged. It is a thin, locked-down client:
+
+- The main window loads the AgentOS server (same pages, same session cookie, same API). No
+  local database, and no business logic duplicated.
+- The main process polls `GET /api/v1/desktop/summary` (pending approvals, recent failures,
+  agent counts) to drive the tray, the badge and native notifications.
+- The approval pop-up is a small window on `/popup/approvals`, a shell-less page that reuses
+  the Approvals components and server action.
+- Installers come from electron-builder (`npm run desktop:build`): NSIS and portable on
+  Windows, dmg on macOS, AppImage on Linux.

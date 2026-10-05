@@ -27,3 +27,6 @@ blob-report/
 !.vscode/extensions.json
 !.vscode/settings.json
 *.log
+
+# desktop app build output
+desktop/dist/

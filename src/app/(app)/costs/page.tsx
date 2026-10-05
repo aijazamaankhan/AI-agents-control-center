@@ -2,6 +2,7 @@ import { AlertTriangle, CircleDollarSign, Coins, Cpu, Lock } from "lucide-react"
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { Folder } from "@/components/ui/folder";
 import { EmptyState } from "@/components/ui/empty-state";
 import { KpiCard } from "@/features/dashboard/components/kpi-card";
 import { getOrganization } from "@/features/organizations/server/organization-service";
@@ -137,11 +138,13 @@ export default async function CostsPage({
 
       {hasUsage ? (
         <>
-          <Card className="rounded-[18px] p-4">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-foreground">
-                Daily {metric === "cost" ? "cost" : "tokens"}
-              </h2>
+          <Folder
+            as="h2"
+            tab={metric === "cost" ? "Daily cost" : "Daily tokens"}
+            accent="var(--color-lime)"
+            className="p-4"
+          >
+            <div className="mb-3 flex justify-end">
               <div className="flex gap-1 text-xs" role="group" aria-label="Chart metric">
                 {(["cost", "tokens"] as const).map((m) => (
                   <Link
@@ -161,7 +164,7 @@ export default async function CostsPage({
               </div>
             </div>
             <UsageChart series={report.series} metric={metric} />
-          </Card>
+          </Folder>
           <div className="grid gap-4 lg:grid-cols-3">
             <UsageBreakdown
               title="By department"

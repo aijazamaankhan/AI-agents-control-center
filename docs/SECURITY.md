@@ -68,7 +68,7 @@ convenience but is never the enforcement point.
 - Server actions: Next.js enforces `Origin` == host for action POSTs.
 - Cookie-authenticated route handlers that mutate state call `assertSameOrigin(request)` (`src/lib/security/origin.ts`): the `Origin` header
   must equal the request origin or `NEXT_PUBLIC_APP_URL`; missing/foreign → `403`. The
-  Tauri desktop app will use bearer tokens instead (Phase 10).
+  desktop app loads the server's own pages, so its requests are same-origin like a browser's.
 - Agent APIs (Phase 4) authenticate with agent API keys in headers, not cookies.
 
 ## 6. Agent APIs (Phase 4)
@@ -185,3 +185,18 @@ Never point a development checkout at a production database.
 - Automatic decisions come only from the agent's own capability rules, set by owners/admins.
   Approval is advisory: AgentOS can't stop an agent that ignores a rejection, so critical
   actions must also be guarded in the agent's own code.
+
+## 6g. Desktop app
+
+- An Electron shell with `contextIsolation`, `sandbox`, no `nodeIntegration` and
+  `webSecurity`. The preload exposes only a marker, plus three address calls on the app's
+  local connect page, which the main process re-validates by sender URL.
+- In-app navigation is limited to the configured server origin. Other links go to the system
+  browser (`http`, `https` and `mailto` only); webviews and all permission requests are
+  blocked.
+- Server addresses must be `https://` unless they are `localhost`. The address is normalised
+  to its origin, and credentials in the URL are refused.
+- The session is the same HTTP-only cookie as the web app, held in Electron's cookie store. No
+  tokens or passwords are written to the settings file.
+- `GET /api/v1/desktop/summary` is session-authenticated, tenant-scoped, `no-store`, and
+  returns names and short texts only.

@@ -197,6 +197,144 @@
   }
 }
 
+/* ------------------------------------------------------------------ folders
+   A realistic file folder: back cover with a slanted label tab, a sheet of paper peeking out,
+   and a front cover with depth. Used by <Folder> (src/components/ui/folder.tsx). */
+@layer components {
+  .folder {
+    --tab-h: 22px;
+    --folder-accent: var(--color-border-strong);
+    --folder-back: color-mix(in oklab, var(--folder-accent) 26%, var(--color-raised));
+    --folder-paper: color-mix(in oklab, var(--color-foreground) 42%, var(--color-surface));
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    padding-top: calc(var(--tab-h) + 12px);
+  }
+  :root[data-theme="light"] .folder {
+    --folder-paper: #ffffff;
+  }
+
+  /* Back cover (sits behind everything). */
+  .folder-back {
+    position: absolute;
+    inset: var(--tab-h) 0 0 0;
+    z-index: -3;
+    border-radius: 0 16px 18px 18px;
+    background:
+      linear-gradient(180deg, color-mix(in oklab, white 5%, transparent), transparent 40px),
+      var(--folder-back);
+    box-shadow: 0 18px 32px -20px rgb(0 0 0 / 0.75);
+  }
+
+  /* Label tab with a slanted shoulder, part of the back cover. */
+  .folder-tab {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -3;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: calc(100% - 30px);
+    height: calc(var(--tab-h) + 1px);
+    padding: 0 4px 0 11px;
+    border-radius: 11px 0 0 0;
+    background:
+      linear-gradient(180deg, color-mix(in oklab, white 7%, transparent), transparent),
+      var(--folder-back);
+    color: color-mix(in oklab, var(--color-foreground) 78%, var(--folder-accent));
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .folder-tab::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: -20px;
+    width: 30px;
+    height: 100%;
+    border-top-right-radius: 10px;
+    background: inherit;
+    transform: skewX(34deg);
+    transform-origin: bottom left;
+    z-index: -1;
+  }
+  .folder-tab > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .folder-tab-dot {
+    flex: none;
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--folder-accent);
+    box-shadow: 0 0 8px var(--folder-accent);
+  }
+
+  /* A sheet of paper between the covers. */
+  .folder-paper {
+    position: absolute;
+    top: calc(var(--tab-h) + 3px);
+    left: 12px;
+    right: 22px;
+    height: 40px;
+    z-index: -2;
+    border-radius: 5px 5px 0 0;
+    background:
+      repeating-linear-gradient(
+        180deg,
+        transparent 0 7px,
+        color-mix(in oklab, var(--color-foreground) 7%, transparent) 7px 8px
+      ),
+      var(--folder-paper);
+    box-shadow: 0 -1px 0 color-mix(in oklab, white 12%, transparent) inset;
+    transform: rotate(-0.6deg);
+    transform-origin: left bottom;
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* Front cover — the content lives here. */
+  .folder-front {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    border-radius: 15px 15px 18px 18px;
+    border: 1px solid var(--color-border);
+    border-top-color: color-mix(in oklab, var(--folder-accent) 45%, var(--color-border));
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-foreground) 4%, var(--color-surface)),
+      var(--color-surface) 56px
+    );
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, white 7%, transparent),
+      0 -8px 16px -12px rgb(0 0 0 / 0.65);
+    transform-origin: 50% 100%;
+    transition:
+      transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 0.35s;
+  }
+
+  /* Small folders (KPIs) open a little on hover: paper lifts, front tips forward. */
+  .folder-interactive:hover .folder-paper,
+  .folder-interactive:focus-within .folder-paper {
+    transform: translateY(-10px) rotate(-2deg);
+  }
+  .folder-interactive:hover .folder-front,
+  .folder-interactive:focus-within .folder-front {
+    transform: perspective(600px) rotateX(-13deg);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, white 9%, transparent),
+      0 -12px 22px -12px rgb(0 0 0 / 0.75);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

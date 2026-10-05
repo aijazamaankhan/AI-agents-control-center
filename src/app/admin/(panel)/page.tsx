@@ -1,6 +1,7 @@
 import { Activity, Bot, Building2, Inbox, ListChecks, UserPlus, Users } from "lucide-react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
+import { Folder } from "@/components/ui/folder";
 import { KpiCard } from "@/features/dashboard/components/kpi-card";
 import { relativeTime } from "@/features/agents/format";
 import { AdminHeader, Pill } from "@/features/admin/components/admin-ui";
@@ -71,10 +72,7 @@ export default async function AdminOverviewPage() {
         ))}
       </section>
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="rounded-[22px]">
-          <CardHeader>
-            <CardTitle>Newest customers</CardTitle>
-          </CardHeader>
+        <Folder as="h2" tab="Newest customers">
           <CardContent>
             <ul className="divide-y divide-border">
               {recentOrgs.map((o) => (
@@ -96,11 +94,8 @@ export default async function AdminOverviewPage() {
               ) : null}
             </ul>
           </CardContent>
-        </Card>
-        <Card className="rounded-[22px]">
-          <CardHeader>
-            <CardTitle>Open enquiries</CardTitle>
-          </CardHeader>
+        </Folder>
+        <Folder as="h2" tab="Open enquiries">
           <CardContent>
             <ul className="divide-y divide-border">
               {recentInquiries.map((i) => (
@@ -128,7 +123,7 @@ export default async function AdminOverviewPage() {
               <UserPlus aria-hidden className="mr-1 inline size-4" /> All enquiries
             </Link>
           </CardContent>
-        </Card>
+        </Folder>
       </div>
     </div>
   );

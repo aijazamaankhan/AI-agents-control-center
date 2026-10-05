@@ -26,6 +26,7 @@ export async function decideApprovalAction(
     return { ok: false, message: "Something went wrong. Please try again." };
   }
   revalidatePath("/approvals");
+  revalidatePath("/popup/approvals");
   revalidatePath("/dashboard");
   return { ok: true, message: decision === "APPROVED" ? "Approved." : "Rejected." };
 }

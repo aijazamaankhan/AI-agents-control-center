@@ -12,7 +12,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { buttonStyles } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
+import { Folder } from "@/components/ui/folder";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusIndicator } from "@/components/ui/status-indicator";
 import { AgentAvatar } from "@/features/agents/components/agent-avatar";
@@ -147,10 +148,7 @@ export default async function DepartmentPage({ params }: { params: Promise<{ id:
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <Card className="rounded-[22px]">
-            <CardHeader>
-              <CardTitle>Agents</CardTitle>
-            </CardHeader>
+          <Folder as="h2" tab="Agents">
             {agents.length === 0 ? (
               <EmptyState
                 icon={Bot}
@@ -200,31 +198,25 @@ export default async function DepartmentPage({ params }: { params: Promise<{ id:
                 ) : null}
               </CardContent>
             )}
-          </Card>
-          <Card className="rounded-[22px]">
-            <CardHeader>
-              <CardTitle>Activity</CardTitle>
-            </CardHeader>
+          </Folder>
+          <Folder as="h2" tab="Activity">
             <EmptyState
               icon={Activity}
               title="No activity yet"
               description="Agent activity will appear here when your agents start working."
             />
-          </Card>
+          </Folder>
         </div>
 
         {canManage ? (
-          <Card className="h-fit rounded-[22px]">
-            <CardHeader>
-              <CardTitle>Manage department</CardTitle>
-            </CardHeader>
+          <Folder as="h2" tab="Manage department" className="h-fit">
             <CardContent className="space-y-6">
               <EditDepartmentForm id={dep.id} name={dep.name} description={dep.description} />
               <div className="border-t border-border pt-5">
                 <DeleteDepartment id={dep.id} name={dep.name} />
               </div>
             </CardContent>
-          </Card>
+          </Folder>
         ) : null}
       </div>
     </div>

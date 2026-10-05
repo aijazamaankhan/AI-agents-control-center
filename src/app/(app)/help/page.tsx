@@ -4,6 +4,7 @@ import {
   Building2,
   CircleDollarSign,
   Map,
+  Monitor,
   Pause,
   Rocket,
   Settings,
@@ -134,6 +135,21 @@ const SECTIONS: Section[] = [
         <strong>Approvals</strong> for an owner, admin or manager. The agent and its task pause
         until you approve or reject (with an optional note the agent receives). Every decision is
         audited and shown in the task trace.
+      </p>
+    ),
+  },
+  {
+    id: "desktop",
+    icon: Monitor,
+    title: "Desktop app",
+    status: "available",
+    body: (
+      <p>
+        Run AgentOS as a desktop app on Windows, macOS or Linux, with a tray icon, desktop
+        notifications for new approvals and failed tasks, and a quick approval pop-up. From the
+        project folder run <code className="font-mono text-xs">npm run desktop</code> (or{" "}
+        <code className="font-mono text-xs">npm run desktop:build</code> for an installer), then
+        connect it to this server&apos;s address.
       </p>
     ),
   },

@@ -116,6 +116,22 @@ shows in the task's trace. Requests still pending when a task ends are closed au
 Try it: `npm run demo:agent` (about 1 in 4 demo tasks asks to send external emails and waits
 up to 60 s — `--approvals 1 --approval-wait 120` to see it every time).
 
+### 6d. Desktop app (Windows, macOS, Linux)
+
+The desktop app is AgentOS in its own window, plus a **tray icon**, **desktop notifications**
+for new approvals and failed tasks, and an **approval pop-up** for quick decisions.
+
+1. Start AgentOS (`npm run dev`), then in a **second terminal**: `npm run desktop`.
+2. On first start, enter `http://localhost:3000` → **Connect**, then sign in.
+3. Closing the window keeps AgentOS in the tray (bottom-right on Windows). Right-click the
+   tray icon for pending approvals, quick links, notification and start-up options, **Change
+   server…** and **Quit**.
+
+Make an installer to share: `npm run desktop:build` (on Windows this creates
+`desktop\dist\AgentOS Setup 0.1.0.exe` and a portable `.exe`). The installer isn't signed yet,
+so Windows shows "Windows protected your PC". Click **More info → Run anyway**. Details:
+[desktop/README.md](../desktop/README.md).
+
 ### 7. Website enquiries & demo requests
 
 The landing page's **Book Demo** button and the footer's **Velorex Studio — IT Services**

@@ -12,7 +12,15 @@ const config = [
       "next-env.d.ts",
       "playwright-report/**",
       "test-results/**",
+      "desktop/node_modules/**",
+      "desktop/dist/**",
     ],
+  },
+  {
+    // Electron main/preload are CommonJS (sandboxed preloads can't be ES modules).
+    files: ["desktop/**/*.cjs"],
+    languageOptions: { sourceType: "commonjs" },
+    rules: { "@typescript-eslint/no-require-imports": "off" },
   },
   {
     rules: {

@@ -2,7 +2,8 @@ import { ArrowLeft, Clock, Coins, Hash, Wrench, Bot } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
+import { Folder } from "@/components/ui/folder";
 import { KpiCard } from "@/features/dashboard/components/kpi-card";
 import { AgentAvatar } from "@/features/agents/components/agent-avatar";
 import { formatDuration, TaskStatusBadge } from "@/features/events/components/task-table";
@@ -109,10 +110,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <Card className="rounded-[22px]">
-          <CardHeader>
-            <CardTitle>Execution trace</CardTitle>
-          </CardHeader>
+        <Folder as="h2" tab="Execution trace">
           <CardContent>
             {task.events.length ? (
               <ExecutionTrace
@@ -123,13 +121,10 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
               <p className="text-sm text-muted">No events recorded for this task.</p>
             )}
           </CardContent>
-        </Card>
+        </Folder>
         <div className="space-y-6">
           {task.error || task.result !== null ? (
-            <Card className="rounded-[22px]">
-              <CardHeader>
-                <CardTitle>{task.error ? "Error" : "Result"}</CardTitle>
-              </CardHeader>
+            <Folder as="h2" tab={task.error ? "Error" : "Result"}>
               <CardContent>
                 {task.error ? <p className="text-sm text-error">{task.error}</p> : null}
                 {task.result !== null ? (
@@ -138,12 +133,9 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
                   </pre>
                 ) : null}
               </CardContent>
-            </Card>
+            </Folder>
           ) : null}
-          <Card className="rounded-[22px]">
-            <CardHeader>
-              <CardTitle>Executions</CardTitle>
-            </CardHeader>
+          <Folder as="h2" tab="Executions">
             <CardContent>
               <ul className="space-y-2 text-sm">
                 {task.executions.map((x) => (
@@ -156,7 +148,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
                 ))}
               </ul>
             </CardContent>
-          </Card>
+          </Folder>
         </div>
       </div>
     </div>

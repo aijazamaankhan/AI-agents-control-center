@@ -5,3 +5,6 @@ prisma/migrations
 package-lock.json
 playwright-report
 test-results
+desktop/node_modules
+desktop/dist
+desktop/package-lock.json

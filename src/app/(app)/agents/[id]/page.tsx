@@ -14,7 +14,8 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Folder } from "@/components/ui/folder";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusIndicator } from "@/components/ui/status-indicator";
 import { KpiCard } from "@/features/dashboard/components/kpi-card";
@@ -236,10 +237,7 @@ export default async function AgentPage({
           </section>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="rounded-[22px]">
-              <CardHeader>
-                <CardTitle>Profile</CardTitle>
-              </CardHeader>
+            <Folder as="h2" tab="Profile">
               <CardContent>
                 <dl className="grid grid-cols-[140px_minmax(0,1fr)] gap-y-3 text-sm">
                   <dt className="text-muted">Description</dt>
@@ -263,11 +261,8 @@ export default async function AgentPage({
                   <dd className="text-muted">None</dd>
                 </dl>
               </CardContent>
-            </Card>
-            <Card className="rounded-[22px]">
-              <CardHeader>
-                <CardTitle>Connection</CardTitle>
-              </CardHeader>
+            </Folder>
+            <Folder as="h2" tab="Connection">
               <CardContent>
                 <dl className="grid grid-cols-[140px_minmax(0,1fr)] gap-y-3 text-sm">
                   <dt className="text-muted">Type</dt>
@@ -306,7 +301,7 @@ export default async function AgentPage({
                   </dd>
                 </dl>
               </CardContent>
-            </Card>
+            </Folder>
           </div>
         </div>
       ) : null}
@@ -373,13 +368,12 @@ export default async function AgentPage({
           </section>
           {usage ? (
             <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-              <Card className="rounded-[18px] p-4">
-                <h2 className="mb-4 text-sm font-semibold text-foreground">
-                  Cost, last 30 days · {formatUsd(usage.totals.cost)} ·{" "}
-                  {formatTokens(usage.totals.tokens)} tokens
-                </h2>
+              <Folder as="h2" tab="Cost · last 30 days" accent="var(--color-lime)" className="p-4">
+                <p className="mb-4 text-sm text-muted">
+                  {formatUsd(usage.totals.cost)} · {formatTokens(usage.totals.tokens)} tokens
+                </p>
                 <UsageChart series={usage.series} metric="cost" />
-              </Card>
+              </Folder>
               <UsageBreakdown
                 title="By model (30 days)"
                 rows={usage.models}
@@ -397,10 +391,7 @@ export default async function AgentPage({
 
       {tab === "permissions" ? (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-          <Card className="rounded-[22px]">
-            <CardHeader>
-              <CardTitle>Current permissions</CardTitle>
-            </CardHeader>
+          <Folder as="h2" tab="Current permissions">
             <CardContent className="space-y-5">
               {agent.capabilities.length === 0 ? (
                 <EmptyState icon={ShieldCheck} title="No capabilities defined" className="py-6" />
@@ -439,19 +430,16 @@ export default async function AgentPage({
                 Phase 7.
               </p>
             </CardContent>
-          </Card>
+          </Folder>
           {canManage ? (
-            <Card className="rounded-[22px]">
-              <CardHeader>
-                <CardTitle>Edit permissions</CardTitle>
-              </CardHeader>
+            <Folder as="h2" tab="Edit permissions">
               <CardContent>
                 <CapabilitiesForm
                   agentId={agent.id}
                   initial={agent.capabilities.map((c) => ({ label: c.label, rule: c.rule }))}
                 />
               </CardContent>
-            </Card>
+            </Folder>
           ) : null}
         </div>
       ) : null}
@@ -476,10 +464,7 @@ export default async function AgentPage({
             }}
           />
           <div className="space-y-6">
-            <Card className="rounded-[22px]">
-              <CardHeader>
-                <CardTitle>API key</CardTitle>
-              </CardHeader>
+            <Folder as="h2" tab="API key">
               <CardContent className="space-y-3">
                 <p className="text-sm text-muted">
                   Active key{" "}
@@ -490,15 +475,12 @@ export default async function AgentPage({
                 </p>
                 <RotateApiKey agentId={agent.id} />
               </CardContent>
-            </Card>
-            <Card className="rounded-[22px] border-error/30">
-              <CardHeader>
-                <CardTitle>Danger zone</CardTitle>
-              </CardHeader>
+            </Folder>
+            <Folder as="h2" tab="Danger zone" accent="var(--color-error)">
               <CardContent>
                 <DeleteAgent agentId={agent.id} name={agent.name} />
               </CardContent>
-            </Card>
+            </Folder>
           </div>
         </div>
       ) : null}

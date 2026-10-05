@@ -1,7 +1,8 @@
 import { ArrowLeft, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
+import { Folder } from "@/components/ui/folder";
 import { StatusIndicator } from "@/components/ui/status-indicator";
 import { relativeTime } from "@/features/agents/format";
 import { AdminActionButton } from "@/features/admin/components/admin-action-button";
@@ -72,10 +73,7 @@ export default async function AdminOrganizationPage({
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-        <Card className="rounded-[22px]">
-          <CardHeader>
-            <CardTitle>Members ({org.memberships.length})</CardTitle>
-          </CardHeader>
+        <Folder as="h2" tab={`Members (${org.memberships.length})`}>
           <CardContent>
             <ul className="divide-y divide-border">
               {org.memberships.map((m) => (
@@ -104,11 +102,8 @@ export default async function AdminOrganizationPage({
               ))}
             </ul>
           </CardContent>
-        </Card>
-        <Card className="rounded-[22px]">
-          <CardHeader>
-            <CardTitle>Departments ({org.departments.length})</CardTitle>
-          </CardHeader>
+        </Folder>
+        <Folder as="h2" tab={`Departments (${org.departments.length})`}>
           <CardContent>
             <ul className="flex flex-wrap gap-2">
               {org.departments.map((d) => (
@@ -124,13 +119,10 @@ export default async function AdminOrganizationPage({
               ) : null}
             </ul>
           </CardContent>
-        </Card>
+        </Folder>
       </div>
 
-      <Card className="overflow-hidden rounded-[22px]">
-        <CardHeader>
-          <CardTitle>Agents ({org.agents.length})</CardTitle>
-        </CardHeader>
+      <Folder as="h2" tab={`Agents (${org.agents.length})`} className="overflow-hidden">
         <div className="scroller-x">
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead>
@@ -197,7 +189,7 @@ export default async function AdminOrganizationPage({
             </tbody>
           </table>
         </div>
-      </Card>
+      </Folder>
     </div>
   );
 }

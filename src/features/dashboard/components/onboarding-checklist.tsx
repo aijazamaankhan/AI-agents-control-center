@@ -1,5 +1,6 @@
 import { CircleCheck, Circle } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
+import { Folder } from "@/components/ui/folder";
 import type { ChecklistItem } from "../server/dashboard-service";
 
 export function OnboardingChecklist({ items }: { items: ChecklistItem[] }) {
@@ -7,16 +8,11 @@ export function OnboardingChecklist({ items }: { items: ChecklistItem[] }) {
   const pct = Math.round((done / items.length) * 100);
 
   return (
-    <Card>
-      <CardHeader>
-        <div>
-          <CardTitle>Get started</CardTitle>
-          <CardDescription>
-            {done} of {items.length} complete
-          </CardDescription>
-        </div>
-      </CardHeader>
+    <Folder as="h2" tab="Get started" accent="var(--color-primary)">
       <CardContent>
+        <p className="mb-3 text-sm text-muted">
+          {done} of {items.length} complete
+        </p>
         <div
           role="progressbar"
           aria-label="Onboarding progress"
@@ -41,6 +37,6 @@ export function OnboardingChecklist({ items }: { items: ChecklistItem[] }) {
           ))}
         </ul>
       </CardContent>
-    </Card>
+    </Folder>
   );
 }

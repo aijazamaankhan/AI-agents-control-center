@@ -73,9 +73,25 @@ fallback.
 ## Components
 
 `Button`, `Card`, `Input`/`Select`/`FormField`, `Badge`, `StatusIndicator`, `EmptyState`,
-`ErrorState`, `Skeleton`, `FormMessage` (`src/components/ui`); `KpiCard`
+`ErrorState`, `Skeleton`, `FormMessage`, `Folder` (`src/components/ui`); `KpiCard`
 (dashboard); `WorkforceMap`, `MapCanvas`, `DetailPanel`, `ActivityFeed`
 (`src/features/workforce/components`).
+
+## Folders
+
+Titled panels and KPIs are drawn as **file folders** (`<Folder>`, CSS in `globals.css` →
+`.folder*`):
+
+- **Back cover** tinted with the panel's accent (`--folder-accent`, neutral by default). Its
+  **label tab** carries the panel title (uppercase, with an accent dot) and has a slanted
+  shoulder.
+- A **sheet of paper** (lined) peeks out between the covers.
+- The **front cover** holds the content: a lit top edge, a subtle gradient, an accent-tinted top
+  border and a shadow cast onto the paper.
+- KPIs use `interactive`: on hover or focus the paper lifts and the front tips open slightly.
+  This is disabled under `prefers-reduced-motion`.
+- Accents: KPIs use their metric colour, cost panels lime, getting-started panels primary,
+  and danger zones error. Plain lists, tables and forms without a title stay flat `Card`s.
 
 ## States
 

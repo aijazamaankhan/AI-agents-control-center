@@ -14,6 +14,7 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 import { buttonStyles } from "@/components/ui/button";
+import { Folder } from "@/components/ui/folder";
 import { KpiCard } from "@/features/dashboard/components/kpi-card";
 import { OnboardingChecklist } from "@/features/dashboard/components/onboarding-checklist";
 import { getDashboardOverview } from "@/features/dashboard/server/dashboard-service";
@@ -173,11 +174,13 @@ export default async function DashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {hasAgents ? (
-          <div className="rounded-[22px] border border-border bg-surface p-6 lg:col-span-2">
-            <p className="text-xs font-semibold tracking-[0.2em] text-primary uppercase">
-              Next step
-            </p>
-            <h2 className="mt-2 text-xl font-semibold text-foreground">Bring your agents online</h2>
+          <Folder
+            tab="Next step"
+            accent="var(--color-primary)"
+            wrapperClassName="lg:col-span-2"
+            className="p-6"
+          >
+            <h2 className="text-xl font-semibold text-foreground">Bring your agents online</h2>
             <p className="mt-2 max-w-xl text-sm text-muted">
               Agents show as <strong className="text-foreground">Offline</strong> until they send a
               heartbeat or event with their API key. Try it with the demo agent:{" "}
@@ -195,19 +198,19 @@ export default async function DashboardPage() {
                 </Link>
               ) : null}
             </div>
-          </div>
+          </Folder>
         ) : (
-          <div className="relative overflow-hidden rounded-[22px] border border-border bg-surface p-6 lg:col-span-2">
+          <Folder
+            tab="Your workforce"
+            accent="var(--color-primary)"
+            wrapperClassName="lg:col-span-2"
+            className="overflow-hidden p-6"
+          >
             <div
               aria-hidden
               className="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full bg-primary/10 blur-3xl"
             />
-            <p className="text-xs font-semibold tracking-[0.2em] text-primary uppercase">
-              Your workforce
-            </p>
-            <h2 className="mt-2 text-xl font-semibold text-foreground">
-              Your AI workforce is empty.
-            </h2>
+            <h2 className="text-xl font-semibold text-foreground">Your AI workforce is empty.</h2>
             <p className="mt-2 max-w-xl text-sm text-muted">
               The map above shows a simulated sample. Connect an agent you already run — SDK, REST
               API, webhook or MCP — and AgentOS will show your real workforce here.
@@ -226,7 +229,7 @@ export default async function DashboardPage() {
                 {hasDepartments ? "Connect Your First Agent" : "Create a department first"}
               </Link>
             ) : null}
-          </div>
+          </Folder>
         )}
         <OnboardingChecklist items={checklist} />
       </div>

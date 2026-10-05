@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Folder } from "@/components/ui/folder";
 import {
   ChangePasswordForm,
   ProfileForm,
@@ -133,14 +134,11 @@ export default async function SettingsPage({
       ) : null}
 
       {tab === "profile" ? (
-        <Card className="rounded-[22px]">
-          <CardHeader>
-            <CardTitle>Your profile</CardTitle>
-          </CardHeader>
+        <Folder as="h2" tab="Your profile">
           <CardContent>
             <ProfileForm name={session.user.name} email={session.user.email} />
           </CardContent>
-        </Card>
+        </Folder>
       ) : null}
 
       {tab === "security" ? (

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card } from "@/components/ui/card";
+import { Folder } from "@/components/ui/folder";
 import { formatTokens } from "@/features/workforce/format";
 import { formatUsd } from "../pricing";
 import type { UsageBreakdownRow } from "../server/usage-service";
@@ -20,12 +20,11 @@ export function UsageBreakdown({
 }) {
   const byCost = totalCost > 0;
   return (
-    <Card className="rounded-[18px] p-4">
-      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+    <Folder as="h2" tab={title} className="p-4">
       {rows.length === 0 ? (
-        <p className="mt-3 text-sm text-muted">No usage in this period.</p>
+        <p className="text-sm text-muted">No usage in this period.</p>
       ) : (
-        <ul className="mt-3 space-y-3" aria-label={title}>
+        <ul className="space-y-3" aria-label={title}>
           {rows.slice(0, 8).map((r) => {
             const share = byCost
               ? r.cost / totalCost
@@ -70,6 +69,6 @@ export function UsageBreakdown({
           })}
         </ul>
       )}
-    </Card>
+    </Folder>
   );
 }

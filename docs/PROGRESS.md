@@ -189,6 +189,29 @@ Update this file at the end of every phase.
   `POST /api/v1/approvals/:id/approve|reject`. SDK: `capability`, `approval.get()`,
   `approval.waitForDecision()`, `task.cancel()`; demo agent waits for your decision.
 
+### Phase 10a — Desktop app
+
+- `desktop/`: an Electron app for Windows, macOS and Linux. `npm run desktop` runs it;
+  `npm run desktop:build` builds installers (Windows NSIS + portable, macOS dmg, Linux
+  AppImage).
+- First-run **connect screen** (validates the address, checks `/api/health`) and an
+  offline/retry screen. Remembers the server, the session and the window size.
+- **Tray**: status tooltip, pending-approval count (the icon gets an orange dot), quick links,
+  and toggles for notifications, keep-running-in-tray and start-with-computer, plus change
+  server and quit. Taskbar overlay badge (Windows), dock badge (macOS).
+- **Native notifications** for new approvals and failed tasks (click → pop-up or task).
+- **Approval pop-up** (`/popup/approvals`, `Ctrl/Cmd+Shift+A`).
+- Hardened: isolation, sandbox, origin-locked navigation, external links in the browser,
+  permissions denied, `https` required except for localhost.
+- `GET /api/v1/desktop/summary`. Unit tests for the desktop helpers, an integration test for
+  the summary, and a manual end-to-end smoke run under Xvfb.
+
+### UI — realistic folder panels
+
+- KPIs and titled panels (dashboard, costs, agent, task, department, settings, admin) are
+  realistic file folders: an accent-tinted back cover with a slanted label tab carrying the
+  title, a lined sheet of paper, and a lit front cover. KPI folders open slightly on hover.
+
 ## 🔜 Next
 
 | Phase | Scope                 | Key deliverables                                                           |
@@ -196,7 +219,7 @@ Update this file at the end of every phase.
 | 2b    | Department follow-ups | Manager ↔ department assignment (managers see only assigned departments)   |
 | 8     | Analytics             | Department / agent / model / provider analytics, CSV export                |
 | 9     | Alerts & budgets      | Budgets with thresholds, failure/token/cost anomalies, notifications       |
-| 10    | Desktop & mobile      | Tauri desktop app (tray, notifications, approval popups), mobile-first PWA |
+| 10b   | Mobile                | Mobile-first PWA (install, approvals and alerts first), push notifications |
 
 ## Known gaps (intentional for now)
 
@@ -204,6 +227,7 @@ Update this file at the end of every phase.
 - No organization switcher (users with several orgs use their first).
 - Rate limiter is in-memory (move to Redis before running several app instances).
 - Managers currently see all departments; per-department assignment is Phase 2b.
-- Notifications are a placeholder until Phase 9 (alerts & budgets); approvals have no email/push yet (Phase 9/10).
+- In-app notifications are a placeholder until Phase 9 (alerts & budgets); approvals notify on the desktop app, with no email or mobile push yet.
+- Desktop installers aren't code-signed yet (SmartScreen / Gatekeeper warning), and there are no auto-updates yet.
 - Approval requests don't expire on their own (they close when the task ends).
 - Prices are entered by Velorex admins; there is no automatic sync with provider price pages.

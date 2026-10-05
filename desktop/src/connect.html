@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Connect — AgentOS</title>
+    <link rel="stylesheet" href="connect.css" />
+  </head>
+  <body>
+    <main>
+      <img src="../assets/icon.png" alt="" width="56" height="56" />
+      <h1>Connect to AgentOS</h1>
+      <p id="intro">Enter the address of your AgentOS server.</p>
+      <p id="problem" class="problem" role="alert" hidden></p>
+      <form id="form" novalidate>
+        <label for="url">Server address</label>
+        <input
+          id="url"
+          name="url"
+          type="text"
+          inputmode="url"
+          autocomplete="url"
+          placeholder="http://localhost:3000"
+          spellcheck="false"
+          required
+        />
+        <p class="hint">
+          Running AgentOS on this computer with <code>npm run dev</code>? Use
+          <button type="button" class="link" id="use-local">http://localhost:3000</button>. For a
+          hosted server use its <strong>https://</strong> address.
+        </p>
+        <p id="error" class="error" role="alert" hidden></p>
+        <div class="actions">
+          <button type="submit" id="connect">Connect</button>
+          <button type="button" id="retry" class="secondary" hidden>Try again</button>
+        </div>
+      </form>
+      <p class="foot" id="version"></p>
+    </main>
+    <script src="connect.js"></script>
+  </body>
+</html>

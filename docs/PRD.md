@@ -23,11 +23,11 @@ Positioning: _"Datadog + Linear + Stripe-style usage analytics for an AI workfor
 
 ## 2. Experiences
 
-| Experience                                     | Tech                                       | Status   |
-| ---------------------------------------------- | ------------------------------------------ | -------- |
-| Web (primary, full-featured)                   | Next.js App Router, React, TypeScript      | Phase 1+ |
-| Desktop (tray, notifications, approval popups) | Tauri shell over the web app + same API    | Phase 10 |
-| Mobile (approvals, alerts, status first)       | Responsive PWA first, Expo later if needed | Phase 10 |
+| Experience                                     | Tech                                       | Status      |
+| ---------------------------------------------- | ------------------------------------------ | ----------- |
+| Web (primary, full-featured)                   | Next.js App Router, React, TypeScript      | Phase 1+    |
+| Desktop (tray, notifications, approval popups) | Electron shell over the web app + same API | Phase 10a ✓ |
+| Mobile (approvals, alerts, status first)       | Responsive PWA first, Expo later if needed | Phase 10    |
 
 All experiences share **one backend, one database, one auth system**.
 
@@ -51,7 +51,7 @@ All experiences share **one backend, one database, one auth system**.
 | 7     | Approvals        | Requests, approve/reject, agent permission rules, audit                                                                                                                                                              |
 | 8     | Analytics        | Agent/department/model/provider/cost analytics, CSV export                                                                                                                                                           |
 | 9     | Alerts           | Budgets & thresholds, failures, token/cost anomalies, notifications                                                                                                                                                  |
-| 10    | Desktop / mobile | Tauri app, mobile-first PWA views                                                                                                                                                                                    |
+| 10    | Desktop / mobile | Electron desktop app (10a), mobile-first PWA views (10b)                                                                                                                                                             |
 
 Detailed requirements for each area (onboarding, agent connection, identity,
 departments, dashboard, live activity, tasks, execution traces, token & cost
@@ -140,6 +140,15 @@ master specification and summarized per phase in `UX_FLOWS.md`, `API.md`,
 - [x] Separate login pages for companies (`/login`) and Velorex admins (`/admin/login`);
       demo logins for every role (docs/LOGINS.md).
 
+## 6h. Phase 10a acceptance — desktop app
+
+- [x] Windows/macOS/Linux desktop app (Electron) with a first-run connect screen and retry.
+- [x] Tray with pending-approval count and quick actions; native notifications for new
+      approvals and failed tasks; approval pop-up window.
+- [x] Locked-down shell (isolation, sandbox, origin-locked navigation, https except localhost).
+- [x] Installers via `npm run desktop:build`; smoke-tested end to end (connect → sign in →
+      notifications → approve in pop-up).
+
 ## 7. Assumptions (documented per "do not guess" rule)
 
 - **A1** _Book Demo_ links to a `mailto:` placeholder until a sales flow exists.
@@ -162,5 +171,9 @@ master specification and summarized per phase in `UX_FLOWS.md`, `API.md`,
   demo prices.
 - **A10** Tokens/tasks "today" are computed from task counters (one row per task), not by
   scanning raw events; cost and the Costs & Usage page read the `UsageDaily` aggregates.
+- **A11** The desktop app uses **Electron** instead of Tauri. Building it needs only Node.js
+  (the owner develops on Windows without a Rust toolchain), and it ships the same Chromium the
+  web app is tested on. Larger installers are the accepted trade-off. It is a thin client: it
+  loads the server's pages, so there is one source of truth.
 - **A5** Onboarding steps 2–5 (departments, connect agent, invite team) land with
   the phases that own those features; the checklist reflects real state.

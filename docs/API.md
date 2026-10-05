@@ -150,3 +150,10 @@ Session auth, `costs:read`. Query `period=7d|30d|90d` (default `30d`). Returns
 where totals/rows carry `cost` (USD), `inputTokens`, `outputTokens`, `cachedTokens`,
 `tokens`, `llmCalls`, `unpricedCalls`. Days are in the organization's timezone; `previous`
 is the same-length period before. Read from `usage_daily` aggregates only.
+
+### `GET /api/v1/desktop/summary` — implemented (Phase 10a)
+
+Session auth; tenant-scoped; `Cache-Control: no-store`. Used by the desktop app every 15 s:
+`{ data: { organization: { name }, user: { name }, agents: { total, working, waiting, failed },
+pendingApprovals, approvals: [{ id, action, risk, agentName, departmentName, requestedAt }] (≤10),
+failedTasks: [{ id, name, agentName, error, failedAt }] (last 24 h, ≤10) } }`.
