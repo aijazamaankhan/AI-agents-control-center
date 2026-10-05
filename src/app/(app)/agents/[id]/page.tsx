@@ -29,6 +29,8 @@ import {
 import { RULE_STYLE } from "@/features/agents/rule-style";
 import { CONNECTION_LABEL, relativeTime } from "@/features/agents/format";
 import { getAgent } from "@/features/agents/server/agent-service";
+import { HealthBadge } from "@/features/tasks/components/health-badge";
+import { agentHealthMap } from "@/features/tasks/server/task-service";
 import { ActivityList } from "@/features/events/components/activity-list";
 import { TaskTable } from "@/features/events/components/task-table";
 import {
@@ -82,13 +84,14 @@ export default async function AgentPage({
   const departments = tab === "settings" ? await listDepartments(ctx) : [];
   const activeKey = agent.apiKeys[0];
   const org = await getOrganization(ctx);
-  const [stats, latency, tasks, activity] = await Promise.all([
+  const [stats, latency, tasks, activity, healthMap] = await Promise.all([
     todayStats(ctx, org.timezone, { agentId: agent.id }),
     avgLlmLatencyToday(ctx, agent.id, org.timezone),
     tab === "tasks" ? listTasks(ctx, { agentId: agent.id, limit: 100 }) : Promise.resolve([]),
     tab === "activity"
       ? recentActivity(ctx, { agentId: agent.id, limit: 100 })
       : Promise.resolve([]),
+    agentHealthMap(ctx),
   ]);
 
   return (
@@ -111,6 +114,14 @@ export default async function AgentPage({
               status={agent.status}
               className="rounded-full border border-border bg-raised px-2.5 py-1"
             />
+            {healthMap[agent.id] ? (
+              <span className="rounded-full border border-border bg-raised px-2.5 py-1">
+                <HealthBadge
+                  health={healthMap[agent.id]!.health}
+                  reasons={healthMap[agent.id]!.reasons}
+                />
+              </span>
+            ) : null}
           </div>
           <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-muted">
             <Link

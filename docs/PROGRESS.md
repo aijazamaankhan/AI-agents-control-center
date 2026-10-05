@@ -109,6 +109,22 @@ Update this file at the end of every phase.
 - Agent page: real Tasks and Activity tabs, today's tasks/success rate/latency/tokens;
   department page: today's tasks/success/tokens.
 
+### Phase 5 — Tasks, activity & monitoring
+
+- `/tasks`: search + filters (department, agent, status, provider, model, date range),
+  pagination. `/tasks/[id]`: header, totals, **expandable execution trace** (time offsets,
+  tokens, latency, tool, IDs, redacted metadata), result/error, executions.
+- `/activity`: full-page live stream (SSE) with department/agent filters and pause.
+- **Agent health** (Healthy / Warning / Critical / No data) with reasons — failure rate,
+  failure streaks, heartbeat silence, LLM latency — on the agents list and agent page.
+- **Global search** in the top bar (`/search`): agents, departments and tasks (by name or ID).
+- Local developer comfort: `npm run dev` re-runs `npm install` when dependencies change,
+  regenerates the Prisma client, **applies new migrations while running** (after
+  `git pull`), and creates an owner **demo account** on an empty database
+  (`demo@agentos.dev` / `AgentOS-demo-2026`, shown on the sign-in page in development
+  only; `npm run seed:demo -- --email … --password …` for your own owner account).
+  In development the error page shows the real cause and a fix hint.
+
 ## 🔜 Next
 
 | Phase | Scope                 | Key deliverables                                                                                                                                                               |

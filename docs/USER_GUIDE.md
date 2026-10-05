@@ -124,7 +124,12 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:3000** → **Start Free**. `npm run dev` does everything:
+Open **http://localhost:3000**. On a fresh database a **demo owner account** is created
+for you — sign in with **demo@agentos.dev / AgentOS-demo-2026** (the sign-in page shows a
+"Use demo account" button in development). Or click **Start Free** to create your own.
+Want your own owner login? `npm run seed:demo -- --email you@company.com --password "at-least-10-chars"`.
+After `git pull`, keep `npm run dev` running or restart it — database updates are applied
+automatically. `npm run dev` does everything:
 creates `.env` with generated secrets, starts a **built-in local database** (PostgreSQL
 running inside Node — nothing to install; the first start downloads it once), applies
 migrations and starts the app. Stop with `Ctrl+C`; your data is kept. To stop the

@@ -1,7 +1,16 @@
 // Shared helpers for the local setup/dev scripts (Windows, macOS, Linux).
 import { execSync, spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { createConnection } from "node:net";
 
 export const ENV_FILE = ".env";
@@ -93,6 +102,65 @@ export async function ensureLocalDb() {
   throw new Error("The local database did not start. Run `npx prisma dev ls` to inspect it.");
 }
 
+const LOCK_STAMP = "node_modules/.agentos-lock-hash";
+
+/** Re-runs `npm install` when package-lock.json changed since the last install (e.g. after git pull). */
+export function ensureDependencies() {
+  if (!existsSync("package-lock.json")) return;
+  const hash = createHash("sha256").update(readFileSync("package-lock.json")).digest("hex");
+  const stamp = existsSync(LOCK_STAMP) ? readFileSync(LOCK_STAMP, "utf8").trim() : "";
+  if (stamp === hash && existsSync("node_modules/.bin")) return;
+  if (stamp || !existsSync("node_modules/.bin")) {
+    console.log("▶ Dependencies changed — running npm install…");
+    execSync("npm install", { stdio: "inherit", shell: true });
+  }
+  mkdirSync("node_modules", { recursive: true });
+  writeFileSync(LOCK_STAMP, hash);
+}
+
+/** Regenerates the Prisma client (fast) so it always matches prisma/schema.prisma. */
+export function generateClient() {
+  execSync("npx prisma generate", { stdio: ["ignore", "ignore", "inherit"], shell: true });
+}
+
+export function migrationNames() {
+  try {
+    return readdirSync("prisma/migrations")
+      .filter((n) => statSync(`prisma/migrations/${n}`).isDirectory())
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * While the app runs, apply new migrations/regenerate the client as soon as they appear
+ * (e.g. after `git pull`), so pages never hit a missing table.
+ */
+export function watchSchema(databaseUrl) {
+  let known = migrationNames().join(",");
+  let schemaMtime = existsSync("prisma/schema.prisma")
+    ? statSync("prisma/schema.prisma").mtimeMs
+    : 0;
+  setInterval(() => {
+    const now = migrationNames().join(",");
+    const mtime = existsSync("prisma/schema.prisma") ? statSync("prisma/schema.prisma").mtimeMs : 0;
+    if (now === known && mtime === schemaMtime) return;
+    known = now;
+    schemaMtime = mtime;
+    console.log("\n▶ Database schema changed — updating…");
+    try {
+      generateClient();
+      migrate(databaseUrl);
+      console.log("✔ Database up to date. Reload the page in your browser.\n");
+    } catch {
+      console.error(
+        "✖ Could not update the database automatically. Stop and run `npm run dev` again.",
+      );
+    }
+  }, 5000).unref();
+}
+
 export function migrate(databaseUrl) {
   execSync("npx prisma migrate deploy", {
     stdio: "inherit",
@@ -103,7 +171,9 @@ export function migrate(databaseUrl) {
 
 /** Prepares .env + database. Returns the env to start the app with. */
 export async function prepare() {
+  ensureDependencies();
   ensureEnvFile();
+  generateClient();
   const env = readEnv();
   let databaseUrl = env.DATABASE_URL;
   if (databaseUrl === OLD_EXAMPLE_URL && !(await portOpen(5432))) {
@@ -124,6 +194,12 @@ export async function prepare() {
     }
   }
   migrate(databaseUrl);
+  // First run on an empty database: create the local demo account (dev only, never production).
+  execSync("node scripts/seed-demo.mjs --if-empty", {
+    stdio: "inherit",
+    shell: true,
+    env: { ...process.env, DATABASE_URL: databaseUrl },
+  });
   return { ...process.env, ...readEnv(), DATABASE_URL: databaseUrl };
 }
 

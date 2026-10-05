@@ -98,3 +98,14 @@ Once agents exist the map shows a **Live** badge (Connecting… while the SSE st
 Agent chips animate by real stage — Thinking (LLM call), Using <tool>, Needs approval —
 and the feed streams new events. KPI cards refresh ~1.5 s after a task finishes or a
 status changes. The "Next step" card shows the demo-agent command.
+
+## Tasks, activity & search (Phase 5)
+
+- `/tasks` — GET filter form (search, department, agent, status, provider, model, range),
+  25 per page; each row links to the task and its agent.
+- `/tasks/[id]` — status, agent/department links, totals (tokens, cached, duration, LLM and
+  tool calls), execution trace (each step a `<details>`; works without JavaScript),
+  result or error, executions.
+- `/activity` — live stream with Live/Paused/Connecting indicator; pausing buffers new
+  events ("Resume (3 new)").
+- Top bar search submits to `/search?q=` (min 2 characters).

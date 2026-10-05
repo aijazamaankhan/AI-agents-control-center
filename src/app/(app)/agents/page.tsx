@@ -9,6 +9,8 @@ import { StatusIndicator } from "@/components/ui/status-indicator";
 import { AgentAvatar } from "@/features/agents/components/agent-avatar";
 import { CONNECTION_LABEL, relativeTime } from "@/features/agents/format";
 import { listAgents } from "@/features/agents/server/agent-service";
+import { HealthBadge } from "@/features/tasks/components/health-badge";
+import { agentHealthMap } from "@/features/tasks/server/task-service";
 import { listDepartments } from "@/features/departments/server/department-service";
 import { requireOrgContext } from "@/lib/auth/guards";
 import { can } from "@/lib/security/permissions";
@@ -35,10 +37,11 @@ export default async function AgentsPage({ searchParams }: { searchParams: Promi
     ? (sp.status as AgentStatus)
     : undefined;
   const q = typeof sp.q === "string" ? sp.q.trim().slice(0, 80) : "";
-  const [departments, agents, all] = await Promise.all([
+  const [departments, agents, all, health] = await Promise.all([
     listDepartments(ctx),
     listAgents(ctx, { departmentId: sp.department || undefined, status, q: q || undefined }),
     listAgents(ctx),
+    agentHealthMap(ctx),
   ]);
   const canManage = can(ctx.role, "agents:manage");
   const filtered = Boolean(sp.department || status || q);
@@ -161,6 +164,11 @@ export default async function AgentsPage({ searchParams }: { searchParams: Promi
                 </p>
                 <div className="col-start-2 md:col-start-auto">
                   <StatusIndicator status={a.status} />
+                  {health[a.id] ? (
+                    <div className="mt-1">
+                      <HealthBadge health={health[a.id]!.health} reasons={health[a.id]!.reasons} />
+                    </div>
+                  ) : null}
                 </div>
                 <p className="col-start-2 text-xs text-muted md:col-start-auto">
                   {relativeTime(a.lastActiveAt)}

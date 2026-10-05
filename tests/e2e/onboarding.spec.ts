@@ -100,7 +100,7 @@ test("signup → create company → dashboard → settings → sign out → sign
   await page.getByRole("link", { name: "Connect Your First Agent" }).click();
   await expect(page).toHaveURL(/\/agents\/new$/);
   await page.getByLabel("Agent name").fill("Lead Research Agent");
-  await page.getByLabel("Department").selectOption({ label: "Sales" });
+  await page.getByLabel("Department", { exact: true }).selectOption({ label: "Sales" });
   await page.getByLabel("Model", { exact: true }).fill("Claude Sonnet");
   await page.getByRole("button", { name: "Web research" }).click();
   await page.getByRole("button", { name: "Send external email" }).click();
@@ -162,11 +162,17 @@ test("signup → create company → dashboard → settings → sign out → sign
 
   await expect(page.getByRole("heading", { name: "Lead Research Agent", level: 1 })).toBeVisible();
   await expect(page.getByText("Online").first()).toBeVisible();
-  await page.getByRole("link", { name: "Permissions" }).click();
+  await page
+    .getByRole("navigation", { name: "Agent sections" })
+    .getByRole("link", { name: "Permissions" })
+    .click();
   await expect(page.getByText("Approval required")).toBeVisible();
   await expect(page.getByText("Send external email").first()).toBeVisible();
 
-  await page.getByRole("link", { name: "Tasks" }).click();
+  await page
+    .getByRole("navigation", { name: "Agent sections" })
+    .getByRole("link", { name: "Tasks" })
+    .click();
   await expect(page.getByRole("cell", { name: /Find 50 SaaS companies in India/ })).toBeVisible();
   await expect(page.getByRole("cell", { name: "15.27K" })).toBeVisible(); // 12,430 + 2,840 counted once
 
@@ -178,6 +184,30 @@ test("signup → create company → dashboard → settings → sign out → sign
   await expect(page.getByRole("region", { name: "Workforce KPIs" })).toContainText(
     "1 completed · 0 failed",
   );
+
+  // Phase 5: tasks list → execution trace, activity stream, global search.
+  await page.goto("/tasks");
+  await page.getByLabel("Status").selectOption("COMPLETED");
+  await page.getByRole("button", { name: "Filter" }).click();
+  await page.getByRole("link", { name: "Find 50 SaaS companies in India" }).click();
+  const trace = page.getByRole("list", { name: "Execution trace" });
+  await expect(trace.getByText("LLM call", { exact: true })).toBeVisible();
+  await expect(trace.getByText("Task completed", { exact: true })).toBeVisible();
+  await trace.getByText("claude-sonnet · 12,430 in / 2,840 out").click();
+  await expect(trace.getByText("Input tokens")).toBeVisible();
+  await expect(page.getByText('"leadsFound": 47')).toBeVisible();
+
+  await page.goto("/activity");
+  await expect(page.getByRole("list", { name: "Activity stream" })).toContainText(
+    "Called web_search",
+  );
+
+  await page
+    .getByRole("searchbox", { name: "Search agents, tasks and departments" })
+    .fill("Lead Research");
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/search\?q=Lead/);
+  await expect(page.getByRole("region", { name: "Agents" })).toContainText("Lead Research Agent");
 
   // A department with agents can't be deleted.
   await page.goto("/departments");

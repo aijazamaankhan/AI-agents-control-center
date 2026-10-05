@@ -63,6 +63,13 @@ Phase 4 (implemented):
 - E2E: events sent with the agent's key appear in the Tasks tab (duplicate not counted),
   dashboard shows Live + KPIs; landing page must log zero console errors.
 
+Phase 5 (implemented):
+
+- Unit: health rules (thresholds, small samples, streaks), trace offsets, task filter parsing.
+- Integration: task search by every filter + ID, trace ordering and serializable numbers,
+  cross-tenant 404/empty results, health from real outcomes, org-scoped global search.
+- E2E: tasks filter → task → expandable trace + result, activity stream, top-bar search.
+
 Planned (later phases): cost calculation, token aggregation, pricing lookup,
 status transitions, event ingestion idempotency, approval flow, budgets, and the
 full 13-step E2E journey in the master spec.

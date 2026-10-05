@@ -27,7 +27,8 @@
     "docker:up": "docker compose up --build",
     "dev:next": "next dev",
     "db:local:stop": "prisma dev stop agentos",
-    "demo:agent": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/demo-agent.mjs"
+    "demo:agent": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/demo-agent.mjs",
+    "seed:demo": "node scripts/seed-demo.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

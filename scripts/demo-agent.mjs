@@ -4,7 +4,9 @@
 //
 //   npm run demo:agent -- --key aos_live_xxx [--url http://localhost:3000] [--tasks 5] [--fast]
 //
-// (Get the key from Agents → Connect Agent. Ctrl+C to stop.)
+// (Get the key from Agents → Connect Agent; with the seeded demo account the key is
+// already in .env as AGENTOS_API_KEY, so `npm run demo:agent` works on its own. Ctrl+C to stop.)
+import "dotenv/config";
 import { AgentOS } from "../src/sdk/index.ts";
 
 const args = process.argv.slice(2);

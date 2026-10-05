@@ -36,20 +36,19 @@ export function AppShell({ user, organizationName, roleLabel, children }: AppShe
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur sm:px-6">
           <MobileNav />
-          <div className="relative max-w-md flex-1">
+          <form action="/search" role="search" className="relative max-w-md flex-1">
             <Search
               aria-hidden
               className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted"
             />
             <input
               type="search"
-              disabled
-              aria-label="Global search (available once agents are connected)"
+              name="q"
+              aria-label="Search agents, tasks and departments"
               placeholder="Search agents, tasks, departments…"
-              title="Global search arrives with agents and tasks"
-              className="h-9 w-full rounded-control border border-border bg-surface pr-3 pl-9 text-sm text-foreground placeholder:text-muted/70 disabled:cursor-not-allowed"
+              className="h-9 w-full rounded-control border border-border bg-surface pr-3 pl-9 text-sm text-foreground placeholder:text-muted/70 focus:border-primary focus:outline-none"
             />
-          </div>
+          </form>
           <div className="ml-auto flex items-center gap-1">
             <button
               type="button"
