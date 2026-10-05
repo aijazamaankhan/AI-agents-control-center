@@ -1,6 +1,7 @@
 import { Lock, Monitor, Palette, Shield, User, Building } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { MotionToggle } from "@/components/motion-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Folder } from "@/components/ui/folder";
@@ -204,6 +205,19 @@ export default async function SettingsPage({
           </CardHeader>
           <CardContent>
             <ThemeToggle showLabels />
+          </CardContent>
+          <CardHeader className="border-t border-border pt-5">
+            <div>
+              <CardTitle>Motion</CardTitle>
+              <CardDescription>
+                Animations on the workforce map and panels. <strong>System</strong> follows your
+                computer&apos;s setting (Windows: Settings → Accessibility → Visual effects →
+                Animation effects). Saved on this device, including the desktop app.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <MotionToggle />
           </CardContent>
         </Card>
       ) : null}

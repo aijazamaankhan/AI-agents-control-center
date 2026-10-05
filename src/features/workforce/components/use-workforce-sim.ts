@@ -1,21 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useMotion } from "@/components/motion-toggle";
 import { createRng, initialSimState, stepSim, type Rng, type SimState } from "../simulation";
 import type { WorkforceDepartment } from "../types";
 
-const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
-
+/** True when animations should stop (OS setting or Settings → Appearance → Motion). */
 export function usePrefersReducedMotion(): boolean {
-  return useSyncExternalStore(
-    (cb) => {
-      const mq = window.matchMedia(REDUCED_MOTION);
-      mq.addEventListener("change", cb);
-      return () => mq.removeEventListener("change", cb);
-    },
-    () => window.matchMedia(REDUCED_MOTION).matches,
-    () => false,
-  );
+  return useMotion() !== "animate";
 }
 
 /** Drives the preview simulation. Pausing stops both state changes and motion (WCAG 2.2.2). */

@@ -141,8 +141,7 @@ export default async function CostsPage({
           <Folder
             as="h2"
             tab={metric === "cost" ? "Daily cost" : "Daily tokens"}
-            accent="var(--color-lime)"
-            className="p-4"
+            className="p-5 pt-0"
           >
             <div className="mb-3 flex justify-end">
               <div className="flex gap-1 text-xs" role="group" aria-label="Chart metric">

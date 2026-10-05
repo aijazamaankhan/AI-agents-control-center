@@ -209,7 +209,7 @@ export default async function DepartmentPage({ params }: { params: Promise<{ id:
         </div>
 
         {canManage ? (
-          <Folder as="h2" tab="Manage department" className="h-fit">
+          <Folder as="h2" tab="Manage department" wrapperClassName="h-fit">
             <CardContent className="space-y-6">
               <EditDepartmentForm id={dep.id} name={dep.name} description={dep.description} />
               <div className="border-t border-border pt-5">

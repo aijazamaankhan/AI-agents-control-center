@@ -202,7 +202,7 @@
    and a front cover with depth. Used by <Folder> (src/components/ui/folder.tsx). */
 @layer components {
   .folder {
-    --tab-h: 22px;
+    --tab-h: 28px;
     --folder-accent: var(--color-border-strong);
     --folder-back: color-mix(in oklab, var(--folder-accent) 26%, var(--color-raised));
     --folder-paper: color-mix(in oklab, var(--color-foreground) 42%, var(--color-surface));
@@ -210,7 +210,7 @@
     isolation: isolate;
     display: flex;
     flex-direction: column;
-    padding-top: calc(var(--tab-h) + 12px);
+    padding-top: calc(var(--tab-h) + 16px);
   }
   :root[data-theme="light"] .folder {
     --folder-paper: #ffffff;
@@ -245,7 +245,7 @@
       linear-gradient(180deg, color-mix(in oklab, white 7%, transparent), transparent),
       var(--folder-back);
     color: color-mix(in oklab, var(--color-foreground) 78%, var(--folder-accent));
-    font-size: 10.5px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -283,7 +283,7 @@
     top: calc(var(--tab-h) + 3px);
     left: 12px;
     right: 22px;
-    height: 40px;
+    height: 56px;
     z-index: -2;
     border-radius: 5px 5px 0 0;
     background:
@@ -335,12 +335,21 @@
   }
 }
 
+/* Reduced motion: follows the OS unless Settings → Appearance → Motion says otherwise
+   (<html data-motion="full" | "reduced">). */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  ::before,
-  ::after {
+  :root:not([data-motion="full"]) *,
+  :root:not([data-motion="full"]) ::before,
+  :root:not([data-motion="full"]) ::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+}
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] ::before,
+:root[data-motion="reduced"] ::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
 }

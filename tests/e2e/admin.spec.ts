@@ -34,6 +34,22 @@ test("theme mode, settings controls and the Velorex admin panel", async ({ page 
   await page.getByRole("main").getByRole("radio", { name: "Dark theme" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 
+  // Motion: "Always animate" overrides the OS reduce-motion setting and survives reloads.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page
+    .getByRole("radiogroup", { name: "Motion" })
+    .getByRole("radio", { name: "Always animate" })
+    .click();
+  await expect(page.locator("html")).toHaveAttribute("data-motion", "full");
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-motion", "full");
+  await page
+    .getByRole("radiogroup", { name: "Motion" })
+    .getByRole("radio", { name: "System" })
+    .click();
+  await expect(page.locator("html")).not.toHaveAttribute("data-motion", /.+/);
+  await page.emulateMedia({ reducedMotion: null });
+
   // Settings controls.
   await page.goto("/settings?tab=security");
   await expect(page.getByRole("list", { name: "Active sessions" })).toContainText("This device");

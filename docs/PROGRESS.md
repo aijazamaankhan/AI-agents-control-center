@@ -206,11 +206,16 @@ Update this file at the end of every phase.
 - `GET /api/v1/desktop/summary`. Unit tests for the desktop helpers, an integration test for
   the summary, and a manual end-to-end smoke run under Xvfb.
 
-### UI — realistic folder panels
+### UI — folder KPIs, motion setting
 
-- KPIs and titled panels (dashboard, costs, agent, task, department, settings, admin) are
-  realistic file folders: an accent-tinted back cover with a slanted label tab carrying the
-  title, a lined sheet of paper, and a lit front cover. KPI folders open slightly on hover.
+- The KPI row at the top of every page is drawn as taller, realistic file folders (accent-tinted
+  back cover with a slanted label tab, a lined sheet of paper, and a front cover; they open
+  slightly on hover). The panels below are regular titled cards.
+- Settings → Appearance → **Motion** (System / Always animate / Reduce). The map explains when
+  the OS pauses animations and offers **Turn on**. The live map shows an idle "heartbeat" so
+  it never looks frozen when no agent is working.
+- Desktop app 0.1.1: animations keep running even if Windows wrongly thinks the window is
+  covered (occlusion detection off, no background throttling).
 
 ## 🔜 Next
 

@@ -11,7 +11,8 @@ import { ActivityFeed } from "./activity-feed";
 import { DetailPanel } from "./detail-panel";
 import { MapCanvas, type Selection } from "./map-canvas";
 import { useLiveActivity, type LiveSeed } from "./use-live-activity";
-import { usePrefersReducedMotion, useWorkforceSim } from "./use-workforce-sim";
+import { applyMotion, useMotion } from "@/components/motion-toggle";
+import { useWorkforceSim } from "./use-workforce-sim";
 
 interface WorkforceMapProps {
   departments: WorkforceDepartment[];
@@ -35,7 +36,8 @@ export function WorkforceMap({
   const { running, setRunning } = sim;
   const liveFeed = useLiveActivity(live, Boolean(live));
   const state: SimState = live ? liveFeed.state : sim.state;
-  const reducedMotion = usePrefersReducedMotion();
+  const motion = useMotion();
+  const reducedMotion = motion !== "animate";
   const [selection, setSelection] = useState<Selection>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const animate = running && !reducedMotion;
@@ -94,6 +96,18 @@ export function WorkforceMap({
                 title="Sample agents and simulated activity. Connect your agents to see your own workforce."
               >
                 <FlaskConical aria-hidden className="size-3" /> Sample workforce · simulated
+              </span>
+            ) : null}
+            {motion === "reduced-by-system" ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-raised px-2 py-0.5 text-[11px] text-muted">
+                Animations off (your system reduces motion)
+                <button
+                  type="button"
+                  onClick={() => applyMotion("full")}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  Turn on
+                </button>
               </span>
             ) : null}
           </div>

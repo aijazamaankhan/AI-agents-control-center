@@ -77,21 +77,31 @@ fallback.
 (dashboard); `WorkforceMap`, `MapCanvas`, `DetailPanel`, `ActivityFeed`
 (`src/features/workforce/components`).
 
-## Folders
+## Folders (KPI row) and titled panels
 
-Titled panels and KPIs are drawn as **file folders** (`<Folder>`, CSS in `globals.css` →
-`.folder*`):
+The **KPI row at the top of each page** is drawn as realistic file folders (`<Folder
+variant="folder">`, styles in `globals.css` → `.folder*`):
 
-- **Back cover** tinted with the panel's accent (`--folder-accent`, neutral by default). Its
-  **label tab** carries the panel title (uppercase, with an accent dot) and has a slanted
-  shoulder.
-- A **sheet of paper** (lined) peeks out between the covers.
-- The **front cover** holds the content: a lit top edge, a subtle gradient, an accent-tinted top
-  border and a shadow cast onto the paper.
-- KPIs use `interactive`: on hover or focus the paper lifts and the front tips open slightly.
-  This is disabled under `prefers-reduced-motion`.
-- Accents: KPIs use their metric colour, cost panels lime, getting-started panels primary,
-  and danger zones error. Plain lists, tables and forms without a title stay flat `Card`s.
+- **Back cover** tinted with the metric's colour (`--folder-accent`). Its label tab carries
+  the metric name and has a slanted shoulder.
+- A lined **sheet of paper** shows between the covers.
+- The **front cover** is about 156px tall, with large numerals, an accent underline and a
+  caption at the bottom.
+- On hover or focus the paper lifts and the front tips open slightly (off under reduced
+  motion).
+
+**Everything below the KPI row** (lists, profiles, charts, breakdowns, getting started) uses
+`<Folder>`'s default `variant="card"`: a regular rounded panel with a title row. Only danger
+zones get a tinted (error) border.
+
+## Motion
+
+Animations follow the OS "reduce motion" setting unless the user overrides it in **Settings
+→ Appearance → Motion** (System / Always animate / Reduce). The choice is stored per device
+(`agentos-motion`) and applied before first paint as `<html data-motion>`, and both the CSS
+and the `useMotion()` hook respect it. When the OS pauses motion, the workforce map says so
+and offers **Turn on**. With nothing working, the live map still shows a slow, muted
+"heartbeat" from the control plane to each department; it is never coloured like agent work.
 
 ## States
 

@@ -127,6 +127,13 @@ for new approvals and failed tasks, and an **approval pop-up** for quick decisio
    tray icon for pending approvals, quick links, notification and start-up options, **Change
    server…** and **Quit**.
 
+**Map not animating in the desktop app?** Make sure you're on desktop app 0.1.1 or newer
+(rebuild/reinstall after `npm run update`). If the map says "Animations off (your system
+reduces motion)", click **Turn on**, or set **Settings → Appearance → Motion → Always
+animate**. Windows turns animations off when **Settings → Accessibility → Visual effects →
+Animation effects** is off. When no agent is working, the map shows only a slow heartbeat;
+run `npm run demo:agent` to see agents at work.
+
 Make an installer to share: `npm run desktop:build` (on Windows this creates
 `desktop\dist\AgentOS Setup 0.1.0.exe` and a portable `.exe`). The installer isn't signed yet,
 so Windows shows "Windows protected your PC". Click **More info → Run anyway**. Details:
@@ -142,7 +149,9 @@ saved in the database (`npx prisma studio` → `Inquiry`).
 ### 8. Theme
 
 Use the ☀ / ☾ / 🖥 switch in the top bar (or Settings → Appearance) for light, dark or
-system theme. The choice is remembered on this device.
+system theme. The choice is remembered on this device. **Settings → Appearance → Motion**
+controls animations: **System** follows your computer's "reduce motion" setting, and
+**Always animate** overrides it.
 
 ### 9. Velorex Studio admin panel (platform owners only)
 

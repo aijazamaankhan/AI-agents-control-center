@@ -8,7 +8,7 @@ export function OnboardingChecklist({ items }: { items: ChecklistItem[] }) {
   const pct = Math.round((done / items.length) * 100);
 
   return (
-    <Folder as="h2" tab="Get started" accent="var(--color-primary)">
+    <Folder as="h2" tab="Get started">
       <CardContent>
         <p className="mb-3 text-sm text-muted">
           {done} of {items.length} complete

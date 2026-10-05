@@ -25,8 +25,8 @@ export const viewport: Viewport = {
   colorScheme: "dark light",
 };
 
-// Runs before first paint so the chosen theme never flashes. Default: dark.
-const themeScript = `try{var t=localStorage.getItem("agentos-theme")||"dark",r=document.documentElement;if(t==="system")r.removeAttribute("data-theme");else r.setAttribute("data-theme",t==="light"?"light":"dark")}catch(e){}`;
+// Runs before first paint so the chosen theme (default dark) and motion preference apply at once.
+const themeScript = `try{var t=localStorage.getItem("agentos-theme")||"dark",r=document.documentElement;if(t==="system")r.removeAttribute("data-theme");else r.setAttribute("data-theme",t==="light"?"light":"dark");var m=localStorage.getItem("agentos-motion");if(m==="full"||m==="reduced")r.setAttribute("data-motion",m)}catch(e){}`;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

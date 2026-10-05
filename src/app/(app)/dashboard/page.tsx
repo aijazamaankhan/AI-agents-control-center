@@ -174,12 +174,7 @@ export default async function DashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {hasAgents ? (
-          <Folder
-            tab="Next step"
-            accent="var(--color-primary)"
-            wrapperClassName="lg:col-span-2"
-            className="p-6"
-          >
+          <Folder tab="Next step" wrapperClassName="lg:col-span-2" className="p-5 pt-3">
             <h2 className="text-xl font-semibold text-foreground">Bring your agents online</h2>
             <p className="mt-2 max-w-xl text-sm text-muted">
               Agents show as <strong className="text-foreground">Offline</strong> until they send a
@@ -200,12 +195,7 @@ export default async function DashboardPage() {
             </div>
           </Folder>
         ) : (
-          <Folder
-            tab="Your workforce"
-            accent="var(--color-primary)"
-            wrapperClassName="lg:col-span-2"
-            className="overflow-hidden p-6"
-          >
+          <Folder tab="Your workforce" wrapperClassName="lg:col-span-2" className="p-5 pt-3">
             <div
               aria-hidden
               className="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full bg-primary/10 blur-3xl"

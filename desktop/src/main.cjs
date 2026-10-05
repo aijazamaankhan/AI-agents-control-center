@@ -31,6 +31,11 @@ const ASSETS = path.join(__dirname, "..", "assets");
 const CONNECT_PAGE = path.join(__dirname, "connect.html");
 const CONNECT_URL = require("node:url").pathToFileURL(CONNECT_PAGE).href;
 
+// Windows can wrongly report a visible window as covered (e.g. under floating toolbars or
+// screen-capture overlays), which pauses all page animations. Don't guess — always render.
+app.commandLine.appendSwitch("disable-features", "CalculateNativeWinOcclusion");
+app.commandLine.appendSwitch("disable-renderer-backgrounding");
+
 if (!app.requestSingleInstanceLock()) {
   app.quit();
   return;
@@ -57,6 +62,9 @@ const SECURE_PREFS = {
   nodeIntegration: false,
   webSecurity: true,
   spellcheck: true,
+  // Keep the live workforce map animating: Chromium otherwise throttles/pauses animations when
+  // it thinks the window is hidden (see the occlusion switch below).
+  backgroundThrottling: false,
 };
 
 // ---------------------------------------------------------------- windows

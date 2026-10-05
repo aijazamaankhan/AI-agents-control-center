@@ -37,6 +37,14 @@ The builds aren't code-signed yet, so Windows SmartScreen shows "Windows protect
 Click **More info → Run anyway**. macOS: right-click the app and choose **Open**. Signing
 certificates are a release task.
 
+## Animations
+
+The app keeps page animations running even when Windows wrongly reports the window as
+covered (native occlusion detection is off, and background throttling is disabled). If
+Windows' **Animation effects** setting is off, AgentOS follows it. The map then says
+"Animations off" with a **Turn on** button, or you can set **Settings → Appearance → Motion →
+Always animate**.
+
 ## Security
 
 - Web pages run with `contextIsolation`, `sandbox` and no Node.js. The preload exposes only

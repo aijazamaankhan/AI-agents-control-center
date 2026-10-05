@@ -20,7 +20,7 @@ export function UsageBreakdown({
 }) {
   const byCost = totalCost > 0;
   return (
-    <Folder as="h2" tab={title} className="p-4">
+    <Folder as="h2" tab={title} className="p-5 pt-3">
       {rows.length === 0 ? (
         <p className="text-sm text-muted">No usage in this period.</p>
       ) : (

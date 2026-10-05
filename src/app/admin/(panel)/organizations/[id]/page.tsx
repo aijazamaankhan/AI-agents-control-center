@@ -122,7 +122,7 @@ export default async function AdminOrganizationPage({
         </Folder>
       </div>
 
-      <Folder as="h2" tab={`Agents (${org.agents.length})`} className="overflow-hidden">
+      <Folder as="h2" tab={`Agents (${org.agents.length})`} wrapperClassName="overflow-hidden">
         <div className="scroller-x">
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead>

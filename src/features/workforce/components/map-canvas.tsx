@@ -101,6 +101,29 @@ export function MapCanvas({
                   className={animate ? "animate-flow-dash" : undefined}
                 />
               ) : null}
+              {animate && !active ? (
+                // Idle heartbeat: the control plane checking on this department. Deliberately
+                // slow and muted so it never reads as agent work.
+                <circle r={2} fill="var(--color-muted)" opacity={0.7}>
+                  <animateMotion
+                    dur="4.8s"
+                    repeatCount="indefinite"
+                    begin={`${(i * 0.9).toFixed(2)}s`}
+                    path={lane.hubPath}
+                    keyPoints="0;1"
+                    keyTimes="0;1"
+                    calcMode="linear"
+                  />
+                  <animate
+                    attributeName="opacity"
+                    values="0;0.75;0.75;0"
+                    keyTimes="0;0.15;0.8;1"
+                    dur="4.8s"
+                    repeatCount="indefinite"
+                    begin={`${(i * 0.9).toFixed(2)}s`}
+                  />
+                </circle>
+              ) : null}
               {animate && active
                 ? Array.from({ length: Math.min(3, counts.WORKING) }, (_, k) => (
                     <circle key={k} r={3} fill={accent} filter="url(#packet-glow)">

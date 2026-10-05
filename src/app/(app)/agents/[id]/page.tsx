@@ -368,7 +368,7 @@ export default async function AgentPage({
           </section>
           {usage ? (
             <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-              <Folder as="h2" tab="Cost · last 30 days" accent="var(--color-lime)" className="p-4">
+              <Folder as="h2" tab="Cost · last 30 days" className="p-5 pt-2">
                 <p className="mb-4 text-sm text-muted">
                   {formatUsd(usage.totals.cost)} · {formatTokens(usage.totals.tokens)} tokens
                 </p>

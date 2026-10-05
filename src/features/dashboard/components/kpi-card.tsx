@@ -24,12 +24,13 @@ export function KpiCard({
     <Folder
       tab={label}
       accent={accent}
+      variant="folder"
       interactive
       wrapperClassName={className}
-      className="px-4 pt-3 pb-4"
+      className="flex min-h-[156px] flex-col px-4 pt-5 pb-5"
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="font-display text-[44px] leading-none font-medium tracking-tight text-foreground tabular-nums">
+        <p className="font-display text-[48px] leading-none font-medium tracking-tight text-foreground tabular-nums">
           {value}
         </p>
         <span
@@ -41,10 +42,10 @@ export function KpiCard({
       </div>
       <span
         aria-hidden
-        className="mt-3 block h-0.5 w-8 rounded-full"
+        className="mt-auto block h-0.5 w-8 rounded-full"
         style={{ background: accent }}
       />
-      {caption ? <p className="mt-2 truncate text-[11px] text-muted">{caption}</p> : null}
+      {caption ? <p className="mt-2.5 truncate text-xs text-muted">{caption}</p> : null}
     </Folder>
   );
 }
