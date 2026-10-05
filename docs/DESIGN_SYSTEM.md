@@ -102,6 +102,10 @@ Animations follow the OS "reduce motion" setting unless the user overrides it in
 and the `useMotion()` hook respect it. When the OS pauses motion, the workforce map says so
 and offers **Turn on**. With nothing working, the live map still shows a slow, muted
 "heartbeat" from the control plane to each department; it is never coloured like agent work.
+Agent avatars carry a status ring: fast glow (working), amber pulse (needs approval), slow
+breathing (idle), faint slow ping + drifting link (offline, awaiting heartbeat). **Preview
+activity** (shown while nothing works) runs the simulator on the org's real departments and
+agents behind a "Simulated preview · not real data" chip with **Stop**; real work ends it.
 
 ## States
 

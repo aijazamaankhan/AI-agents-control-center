@@ -1,10 +1,10 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, FlaskConical, Pause, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, FlaskConical, Pause, Play, Square } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { computeLayout, LAYOUT } from "../layout";
-import type { SimState } from "../simulation";
+import { countByStatus, type SimState } from "../simulation";
 import type { WorkforceDepartment } from "../types";
 import { STATUS_STYLE } from "../visuals";
 import { ActivityFeed } from "./activity-feed";
@@ -13,6 +13,26 @@ import { MapCanvas, type Selection } from "./map-canvas";
 import { useLiveActivity, type LiveSeed } from "./use-live-activity";
 import { applyMotion, useMotion } from "@/components/motion-toggle";
 import { useWorkforceSim } from "./use-workforce-sim";
+
+const PREVIEW_TASKS = [
+  "Process incoming requests",
+  "Research and summarise",
+  "Update records",
+  "Draft a report",
+];
+const PREVIEW_TOOLS = ["web_search", "docs.read", "records.update"];
+
+/** Real agents carry no sample tasks/tools; give the labelled preview generic ones. */
+function withPreviewWork(departments: WorkforceDepartment[]): WorkforceDepartment[] {
+  return departments.map((d) => ({
+    ...d,
+    agents: d.agents.map((a) => ({
+      ...a,
+      tasks: a.tasks.length ? a.tasks : PREVIEW_TASKS.map((name) => ({ name, result: "Done" })),
+      tools: a.tools.length ? a.tools : PREVIEW_TOOLS,
+    })),
+  }));
+}
 
 interface WorkforceMapProps {
   departments: WorkforceDepartment[];
@@ -32,10 +52,19 @@ export function WorkforceMap({
   className,
 }: WorkforceMapProps) {
   const layout = useMemo(() => computeLayout(departments), [departments]);
-  const sim = useWorkforceSim(departments, { enabled: !live });
-  const { running, setRunning } = sim;
   const liveFeed = useLiveActivity(live, Boolean(live));
-  const state: SimState = live ? liveFeed.state : sim.state;
+  // "Preview activity": a clearly labelled simulation over the org's real departments and
+  // agents, offered while nothing is working. Real work ends it automatically.
+  const [previewing, setPreviewing] = useState(false);
+  const liveWorking = live ? countByStatus(liveFeed.state).WORKING : 0;
+  const preview = Boolean(live) && previewing && liveWorking === 0;
+  const simDepartments = useMemo(
+    () => (live ? withPreviewWork(departments) : departments),
+    [live, departments],
+  );
+  const sim = useWorkforceSim(simDepartments, { enabled: !live || preview });
+  const { running, setRunning } = sim;
+  const state: SimState = live && !preview ? liveFeed.state : sim.state;
   const motion = useMotion();
   const reducedMotion = motion !== "animate";
   const [selection, setSelection] = useState<Selection>(null);
@@ -97,6 +126,30 @@ export function WorkforceMap({
               >
                 <FlaskConical aria-hidden className="size-3" /> Sample workforce · simulated
               </span>
+            ) : null}
+            {live && preview ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-[11px] font-medium text-warning">
+                <FlaskConical aria-hidden className="size-3" /> Simulated preview · not real data
+                <button
+                  type="button"
+                  onClick={() => setPreviewing(false)}
+                  className="inline-flex items-center gap-1 font-semibold hover:underline"
+                >
+                  <Square aria-hidden className="size-2.5" /> Stop
+                </button>
+              </span>
+            ) : live && liveWorking === 0 && departments.some((d) => d.agents.length) ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setPreviewing(true);
+                  setRunning(true);
+                }}
+                title="Play simulated activity on your departments and agents to see how the map looks when they work. Nothing is recorded."
+                className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-muted hover:border-primary hover:text-foreground"
+              >
+                <Play aria-hidden className="size-3" /> Preview activity
+              </button>
             ) : null}
             {motion === "reduced-by-system" ? (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-raised px-2 py-0.5 text-[11px] text-muted">

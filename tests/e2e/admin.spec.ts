@@ -119,6 +119,18 @@ test("separate admin and company logins with the seeded demo accounts", async ({
   await expect(page).toHaveURL(/\/dashboard$/);
   await page.goto("/departments");
   await expect(page.getByRole("main").getByText("Customer Support").first()).toBeVisible();
+
+  // Globex's agents never work in tests: the map offers a clearly labelled simulated preview.
+  await page.context().clearCookies();
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("owner@globex.test");
+  await page.getByLabel("Password").fill("Globex-owner-2026");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await page.getByRole("button", { name: "Preview activity" }).click();
+  await expect(page.getByText("Simulated preview · not real data")).toBeVisible();
+  await page.getByRole("button", { name: "Stop" }).click();
+  await expect(page.getByRole("button", { name: "Preview activity" })).toBeVisible();
 });
 
 test("costs & usage: admin adds a price, owners see costs, viewers don't", async ({

@@ -85,22 +85,136 @@ export function usesLocalDb(databaseUrl) {
   return !databaseUrl || databaseUrl === LOCAL_DB.url;
 }
 
-/** Starts the built-in database in the background (idempotent) and waits until it accepts connections. */
-export async function ensureLocalDb() {
-  if (await portOpen(LOCAL_DB.dbPort)) return LOCAL_DB.url;
-  console.log("▶ Starting the built-in local database (first run downloads it, ~1 min)…");
+/** True only when a real PostgreSQL answers `SELECT 1` (an open port alone can be a stuck process). */
+export async function dbReady(url, timeoutMs = 4000) {
+  let client;
+  try {
+    const { default: pg } = await import("pg");
+    client = new pg.Client({
+      connectionString: url,
+      connectionTimeoutMillis: timeoutMs,
+      query_timeout: timeoutMs,
+    });
+    await client.connect();
+    await client.query("SELECT 1");
+    return true;
+  } catch {
+    return false;
+  } finally {
+    await client?.end().catch(() => {});
+  }
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function startLocalDb() {
   execSync(
     `npx prisma dev -n ${LOCAL_DB.name} --port ${LOCAL_DB.port} --db-port ${LOCAL_DB.dbPort} --shadow-db-port ${LOCAL_DB.shadowPort} --detach`,
-    { stdio: ["ignore", "ignore", "inherit"], shell: true },
+    { stdio: ["ignore", "ignore", "inherit"], shell: true, timeout: 180000 },
   );
-  for (let i = 0; i < 60; i++) {
-    if (await portOpen(LOCAL_DB.dbPort)) {
-      console.log("✔ Local database running on port", LOCAL_DB.dbPort);
-      return LOCAL_DB.url;
+}
+
+/** PIDs listening on a TCP port (only used for the built-in database's own ports). */
+function listenerPids(port) {
+  try {
+    if (isWindows) {
+      const out = execSync("netstat -ano -p tcp", {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      });
+      return [
+        ...new Set(
+          out
+            .split(/\r?\n/)
+            .filter((l) => /LISTENING/i.test(l) && new RegExp(`[:.]${port}\\s`).test(l))
+            .map((l) => l.trim().split(/\s+/).pop())
+            .filter((pid) => /^\d+$/.test(pid) && pid !== "0"),
+        ),
+      ];
     }
-    await new Promise((r) => setTimeout(r, 1000));
+    const out = execSync(`lsof -t -iTCP:${port} -sTCP:LISTEN`, {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    return out.split(/\s+/).filter((pid) => /^\d+$/.test(pid));
+  } catch {
+    return [];
   }
-  throw new Error("The local database did not start. Run `npx prisma dev ls` to inspect it.");
+}
+
+function stopLocalDb() {
+  try {
+    execSync(`npx prisma dev stop ${LOCAL_DB.name}`, {
+      stdio: "ignore",
+      shell: true,
+      timeout: 20000,
+    });
+  } catch {
+    /* not running / already stopped / stuck */
+  }
+}
+
+/** Last resort for a stuck database: end whatever holds AgentOS's own database ports. */
+function killLocalDbProcesses() {
+  for (const port of [LOCAL_DB.dbPort, LOCAL_DB.port, LOCAL_DB.shadowPort]) {
+    for (const pid of listenerPids(port)) {
+      if (Number(pid) === process.pid) continue;
+      try {
+        if (isWindows) execSync(`taskkill /PID ${pid} /T /F`, { stdio: "ignore" });
+        else process.kill(Number(pid), "SIGKILL");
+        console.log(`  stopped the stuck database process (PID ${pid}, port ${port})`);
+      } catch {
+        /* already gone */
+      }
+    }
+  }
+}
+
+/** Polls `check` until it passes or `seconds` elapse (deadline-based, never hangs). */
+async function waitFor(check, seconds) {
+  const deadline = Date.now() + seconds * 1000;
+  while (Date.now() < deadline) {
+    if (await check()) return true;
+    await sleep(1000);
+  }
+  return false;
+}
+
+/**
+ * Starts the built-in database in the background (idempotent) and waits until it really
+ * answers queries. A database process left stuck (e.g. after sleep, or a force-closed
+ * terminal) keeps the port open without answering — it is stopped (forcefully if needed)
+ * and started again.
+ */
+export async function ensureLocalDb() {
+  const url = LOCAL_DB.url;
+  if (await dbReady(url)) return url;
+
+  if (await portOpen(LOCAL_DB.dbPort)) {
+    console.log("⚠ The built-in database isn't responding — restarting it…");
+    stopLocalDb();
+    if (!(await waitFor(async () => !(await portOpen(LOCAL_DB.dbPort)), 8))) {
+      killLocalDbProcesses();
+      await waitFor(async () => !(await portOpen(LOCAL_DB.dbPort)), 8);
+    }
+  } else {
+    console.log("▶ Starting the built-in local database (first run downloads it, ~1 min)…");
+  }
+
+  startLocalDb();
+  if (await waitFor(() => dbReady(url, 2000), 90)) {
+    console.log("✔ Local database running on port", LOCAL_DB.dbPort);
+    return url;
+  }
+  throw new Error(
+    [
+      `The built-in database on port ${LOCAL_DB.dbPort} is not responding.`,
+      "  Fix: close every terminal running AgentOS (and the desktop app), then run:",
+      `    npx prisma dev stop ${LOCAL_DB.name}`,
+      "    npm run dev",
+      "  Still failing? Restart your computer, or see docs/USER_GUIDE.md → Troubleshooting.",
+    ].join("\n"),
+  );
 }
 
 const LOCK_STAMP = "node_modules/.agentos-lock-hash";
@@ -163,11 +277,20 @@ export function watchSchema(databaseUrl) {
 }
 
 export function migrate(databaseUrl) {
-  execSync("npx prisma migrate deploy", {
-    stdio: "inherit",
-    shell: true,
-    env: { ...process.env, DATABASE_URL: databaseUrl },
-  });
+  for (let attempt = 1; ; attempt++) {
+    try {
+      execSync("npx prisma migrate deploy", {
+        stdio: "inherit",
+        shell: true,
+        env: { ...process.env, DATABASE_URL: databaseUrl },
+      });
+      return;
+    } catch (err) {
+      if (attempt >= 3) throw err;
+      console.log(`⚠ Applying database updates failed — retrying (${attempt + 1}/3)…`);
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 3000); // sync 3 s pause
+    }
+  }
 }
 
 const HEAD_STAMP = ".next/.agentos-head";

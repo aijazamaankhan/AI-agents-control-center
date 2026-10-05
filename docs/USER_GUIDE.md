@@ -131,8 +131,10 @@ for new approvals and failed tasks, and an **approval pop-up** for quick decisio
 (rebuild/reinstall after `npm run update`). If the map says "Animations off (your system
 reduces motion)", click **Turn on**, or set **Settings → Appearance → Motion → Always
 animate**. Windows turns animations off when **Settings → Accessibility → Visual effects →
-Animation effects** is off. When no agent is working, the map shows only a slow heartbeat;
-run `npm run demo:agent` to see agents at work.
+Animation effects** is off. Offline agents only show a faint "waiting for heartbeat" ping; agents
+animate fully when they work. Run `npm run demo:agent` to see real work, or click **Preview
+activity** on the map for a clearly labelled simulation on your own departments and agents
+(nothing is recorded; it stops when real work arrives).
 
 Make an installer to share: `npm run desktop:build` (on Windows this creates
 `desktop\dist\AgentOS Setup 0.1.0.exe` and a portable `.exe`). The installer isn't signed yet,
@@ -345,6 +347,13 @@ See `ARCHITECTURE.md`. In short: routes in `src/app`, business logic in
 `src/features/workforce`, schema in `prisma/schema.prisma`.
 
 ### Troubleshooting
+
+**`P1001: Can't reach database server at localhost:51214`** — the built-in database got stuck
+(e.g. after the PC slept or a terminal was force-closed). `npm run dev` now detects this and
+restarts it automatically ("The built-in database isn't responding — restarting it…"). If it
+still fails: close every terminal running AgentOS (and the desktop app), then run
+`npx prisma dev stop agentos` and `npm run dev` again — or restart the computer. Your data is
+kept.
 
 | Symptom                                           | Fix                                                            |
 | ------------------------------------------------- | -------------------------------------------------------------- |

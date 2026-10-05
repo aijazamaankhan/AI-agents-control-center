@@ -214,6 +214,11 @@ Update this file at the end of every phase.
 - Settings → Appearance → **Motion** (System / Always animate / Reduce). The map explains when
   the OS pauses animations and offers **Turn on**. The live map shows an idle "heartbeat" so
   it never looks frozen when no agent is working.
+- Agent status rings on the map (working / approval / idle / offline "awaiting heartbeat"),
+  and **Preview activity**: a clearly labelled simulation on your own departments and agents
+  while nothing is working.
+- `npm run dev` recovers a stuck built-in database by itself (real `SELECT 1` check, restart,
+  force-stop of the stuck process on its own ports, migration retries).
 - Desktop app 0.1.1: animations keep running even if Windows wrongly thinks the window is
   covered (occlusion detection off, no background throttling).
 

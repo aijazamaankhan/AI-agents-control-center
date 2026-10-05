@@ -30,6 +30,14 @@ function agentLine(agent: WorkforceAgent, rt: AgentRuntime): string {
   return `Thinking · ${agent.model}`;
 }
 
+const RING_SPEED: Record<AgentRuntime["status"], string> = {
+  WORKING: "2.2s",
+  WAITING: "1.8s",
+  IDLE: "3.6s",
+  FAILED: "0s",
+  OFFLINE: "4.2s",
+};
+
 const STATUS_ICON = {
   WORKING: LoaderCircle,
   WAITING: Hand,
@@ -157,7 +165,12 @@ export function MapCanvas({
                         strokeOpacity={0.8}
                         strokeWidth={1.25}
                         strokeDasharray={working ? "3 5" : "2 4"}
-                        className={animate && working ? "animate-flow-dash" : undefined}
+                        className={
+                          animate && rt.status !== "FAILED" ? "animate-flow-dash" : undefined
+                        }
+                        style={
+                          working ? undefined : { animationDuration: "5s" } // slow probe drift
+                        }
                       />
                     ) : null}
                     {animate && working ? (
@@ -324,10 +337,19 @@ export function MapCanvas({
                   }}
                 >
                   <span className="relative flex size-8 shrink-0 items-center justify-center">
-                    {rt.status === "WORKING" && animate ? (
+                    {animate && rt.status !== "FAILED" ? (
+                      // Working: fast glow. Waiting: amber pulse. Idle: slow breathing.
+                      // Offline: faint, slow "ping" — waiting for its first heartbeat.
                       <span
                         className="absolute inset-0 animate-pulse-ring rounded-full"
-                        style={{ background: tint(status.color, 45) }}
+                        style={{
+                          background: tint(
+                            status.color,
+                            rt.status === "WORKING" ? 45 : rt.status === "OFFLINE" ? 22 : 30,
+                          ),
+                          animationDuration: RING_SPEED[rt.status],
+                          animationDelay: `${(y % 7) * 0.31}s`,
+                        }}
                       />
                     ) : null}
                     <span
